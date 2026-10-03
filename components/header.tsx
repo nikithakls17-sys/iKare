@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { seedDemo } from "@/lib/store";
+import { useWhatsApp } from "./live";
 import { useToday } from "./today-provider";
 
 const NAV = [
@@ -26,6 +27,8 @@ export function Header() {
             </span>
             <span className="font-display text-2xl font-bold tracking-tight">iCare</span>
           </Link>
+          <div className="flex items-center gap-2">
+          <WhatsAppPill />
           <nav className="hidden gap-1 sm:flex">
             {NAV.map(({ href, label, icon: Icon }) => (
               <Link
@@ -40,6 +43,7 @@ export function Header() {
               </Link>
             ))}
           </nav>
+          </div>
         </div>
         <DemoBar />
       </header>
@@ -60,6 +64,23 @@ export function Header() {
         ))}
       </nav>
     </>
+  );
+}
+
+function WhatsAppPill() {
+  const wa = useWhatsApp();
+  if (!wa?.enabled) return null;
+  const ready = wa.status === "ready";
+  return (
+    <Link
+      href="/connect"
+      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${
+        ready ? "bg-emerald-50 text-emerald-800" : "bg-peach text-coral-dark"
+      }`}
+    >
+      <span className={`h-2 w-2 rounded-full ${ready ? "animate-pulse bg-emerald-500" : "bg-coral"}`} />
+      {ready ? "WhatsApp live" : "Link WhatsApp"}
+    </Link>
   );
 }
 

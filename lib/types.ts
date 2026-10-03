@@ -10,6 +10,7 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 export type MomentStatus = "pending" | "done" | "snoozed" | "dismissed";
+export type MomentSource = "screenshot" | "note" | "whatsapp" | "export";
 
 export type Person = {
   id: string;
@@ -17,6 +18,10 @@ export type Person = {
   phone: string | null;
   relationship: string | null;
   emoji: string;
+  timezone: string | null; // IANA, e.g. "Europe/London"
+  whatsapp_id: string | null; // e.g. "447911123456@c.us"
+  last_contact_at: string | null;
+  contact_every_days: number; // nudge if quiet longer than this
   created_at: string;
 };
 
@@ -30,10 +35,31 @@ export type Moment = {
   followup_date: string;
   suggested_message: string;
   status: MomentStatus;
-  source: "screenshot" | "note";
+  source: MomentSource;
   created_at: string;
   completed_at: string | null;
 };
+
+export type OutboxStatus = "scheduled" | "sent" | "failed" | "cancelled";
+
+export type OutboxItem = {
+  id: string;
+  person_id: string;
+  moment_id: string | null;
+  text: string;
+  status: OutboxStatus;
+  send_at: string; // UTC ISO
+  sent_at: string | null;
+  error: string | null;
+  created_at: string;
+};
+
+export type Tables = {
+  people: Person;
+  moments: Moment;
+  outbox: OutboxItem;
+};
+export type TableName = keyof Tables;
 
 export type ExtractedMoment = {
   personName: string;

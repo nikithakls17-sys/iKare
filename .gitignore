@@ -40,3 +40,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/walkthrough
+
+/.data
+/.wwebjs_auth
+/.wwebjs_cache

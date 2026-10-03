@@ -1,15 +1,25 @@
 "use client";
 
+import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { LocalTime, useNow } from "@/components/live";
 import { createPerson, deletePerson, updatePerson } from "@/lib/store";
+import { allTimezones, cityName, guessTimezone, localTimeLabel, offsetLabel, textWindow } from "@/lib/tz";
 import type { Person } from "@/lib/types";
 import { useData } from "@/lib/use-data";
 
-const EMOJIS = ["🙂", "🌻", "💛", "🚗", "🎸", "🌿", "🐶", "☕", "🌙", "🔥", "🎨", "⚽"];
+const EMOJIS = ["🙂", "🌻", "💛", "🚗", "🎸", "🌿", "🍜", "🐶", "☕", "🌙", "🔥", "🎨", "⚽"];
 
-type Form = { name: string; phone: string; relationship: string; emoji: string };
-const EMPTY: Form = { name: "", phone: "", relationship: "", emoji: "🙂" };
+type Form = {
+  name: string;
+  phone: string;
+  relationship: string;
+  emoji: string;
+  timezone: string;
+  contact_every_days: number;
+};
+const EMPTY: Form = { name: "", phone: "", relationship: "", emoji: "🙂", timezone: "", contact_every_days: 14 };
 
 export default function PeoplePage() {
   const { people, moments, loading, refresh } = useData();
@@ -20,6 +30,15 @@ export default function PeoplePage() {
     showedUp: moments.filter((m) => m.person_id === id && m.status === "done").length,
   });
   const totalShowUps = moments.filter((m) => m.status === "done").length;
+
+  const toPatch = (f: Form): Partial<Person> => ({
+    name: f.name.trim(),
+    phone: f.phone.trim() || null,
+    relationship: f.relationship.trim() || null,
+    emoji: f.emoji,
+    timezone: f.timezone || guessTimezone(f.phone) || null,
+    contact_every_days: Math.max(1, Number(f.contact_every_days) || 14),
+  });
 
   return (
     <div>
@@ -42,25 +61,26 @@ export default function PeoplePage() {
         )}
       </div>
 
+      <WorldClock people={people} />
+
       <div className="mt-6 space-y-3">
         {editing === "new" && (
           <PersonForm
             initial={EMPTY}
             onCancel={() => setEditing(null)}
             onSave={async (f) => {
-              await createPerson(f);
+              await createPerson({ ...toPatch(f), name: f.name });
               setEditing(null);
               refresh();
             }}
           />
         )}
 
-        {loading &&
-          [0, 1, 2].map((i) => <div key={i} className="h-20 animate-pulse rounded-3xl bg-paper" />)}
+        {loading && [0, 1, 2].map((i) => <div key={i} className="h-20 animate-pulse rounded-3xl bg-paper" />)}
 
         {!loading && people.length === 0 && editing !== "new" && (
           <p className="rounded-3xl border border-dashed border-line bg-paper p-8 text-center text-muted">
-            No one here yet. People are added automatically when you save moments.
+            No one here yet. People are added automatically from WhatsApp or when you save moments.
           </p>
         )}
 
@@ -73,6 +93,8 @@ export default function PeoplePage() {
                 phone: p.phone ?? "",
                 relationship: p.relationship ?? "",
                 emoji: p.emoji,
+                timezone: p.timezone ?? "",
+                contact_every_days: p.contact_every_days ?? 14,
               }}
               onCancel={() => setEditing(null)}
               onDelete={async () => {
@@ -81,12 +103,7 @@ export default function PeoplePage() {
                 refresh();
               }}
               onSave={async (f) => {
-                await updatePerson(p.id, {
-                  name: f.name.trim(),
-                  phone: f.phone.trim() || null,
-                  relationship: f.relationship.trim() || null,
-                  emoji: f.emoji,
-                });
+                await updatePerson(p.id, toPatch(f));
                 setEditing(null);
                 refresh();
               }}
@@ -95,6 +112,35 @@ export default function PeoplePage() {
             <PersonRow key={p.id} person={p} {...stats(p.id)} onEdit={() => setEditing(p.id)} />
           ),
         )}
+      </div>
+    </div>
+  );
+}
+
+function WorldClock({ people }: { people: Person[] }) {
+  const now = useNow();
+  const zones = useMemo(() => {
+    const byZone = new Map<string, Person[]>();
+    for (const p of people) if (p.timezone) byZone.set(p.timezone, [...(byZone.get(p.timezone) ?? []), p]);
+    return [...byZone.entries()];
+  }, [people]);
+  if (zones.length < 2) return null;
+  const dot = { good: "bg-emerald-400", late: "bg-amber-400", sleeping: "bg-indigo-400" };
+  return (
+    <div className="mt-6 -mx-4 overflow-x-auto px-4 pb-1">
+      <div className="flex gap-2">
+        {zones.map(([tz, ps]) => (
+          <div key={tz} className="min-w-[8.5rem] shrink-0 rounded-2xl bg-ink px-4 py-3 text-white">
+            <div className="flex items-center gap-1.5 text-xs opacity-70">
+              <span className={`h-2 w-2 rounded-full ${dot[textWindow(tz, now)]}`} />
+              {cityName(tz)}
+            </div>
+            <div className="font-display text-2xl font-bold">{localTimeLabel(tz, now)}</div>
+            <div className="truncate text-xs opacity-80">
+              {ps.map((p) => p.emoji).join(" ")} {ps.map((p) => p.name).join(", ")}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -115,11 +161,21 @@ function PersonRow({
     <div className="rise flex items-center gap-4 rounded-3xl border border-line bg-paper p-4">
       <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-peach text-3xl">{person.emoji}</div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-lg font-bold">{person.name}</p>
+        <p className="truncate text-lg font-bold">
+          {person.name}
+          {person.whatsapp_id && <span className="ml-1.5 text-xs font-semibold text-emerald-600">● WhatsApp</span>}
+        </p>
         <p className="text-sm text-muted">
           {person.relationship ?? "—"}
+          {person.last_contact_at && ` · talked ${formatDistanceToNowStrict(parseISO(person.last_contact_at))} ago`}
           {pending > 0 && ` · ${pending} coming up`}
         </p>
+        {person.timezone && (
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <LocalTime tz={person.timezone} compact />
+            <span className="text-xs text-muted">{offsetLabel(person.timezone)}</span>
+          </div>
+        )}
       </div>
       <div className="text-right">
         <p className="font-display text-2xl font-bold text-coral">{showedUp}</p>
@@ -149,6 +205,8 @@ function PersonForm({
 }) {
   const [f, setF] = useState(initial);
   const [busy, setBusy] = useState(false);
+  const zones = useMemo(() => allTimezones(), []);
+  const guessed = guessTimezone(f.phone);
   const input = "w-full rounded-xl border border-line bg-cream px-3 py-2 outline-none focus:border-coral";
 
   return (
@@ -179,7 +237,7 @@ function PersonForm({
           </button>
         ))}
       </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <input
           autoFocus
           required
@@ -196,15 +254,33 @@ function PersonForm({
         />
         <input
           type="tel"
-          placeholder="Phone w/ country code"
+          placeholder="Phone with country code, e.g. +44 7911 123456"
           value={f.phone}
           onChange={(e) => setF({ ...f, phone: e.target.value })}
           className={input}
         />
+        <select value={f.timezone} onChange={(e) => setF({ ...f, timezone: e.target.value })} className={input}>
+          <option value="">
+            {guessed ? `Auto: ${cityName(guessed)} (from phone)` : "Time zone (auto from phone)"}
+          </option>
+          {zones.map((z) => (
+            <option key={z} value={z}>
+              {z.replace(/_/g, " ")}
+            </option>
+          ))}
+        </select>
+        <label className="flex items-center gap-2 text-sm text-muted sm:col-span-2">
+          Nudge me if we haven&apos;t talked in
+          <input
+            type="number"
+            min={1}
+            value={f.contact_every_days}
+            onChange={(e) => setF({ ...f, contact_every_days: Number(e.target.value) })}
+            className="w-20 rounded-xl border border-line bg-cream px-3 py-1.5 text-ink outline-none focus:border-coral"
+          />
+          days
+        </label>
       </div>
-      <p className="mt-2 text-xs text-muted">
-        Phone is optional. Include the country code (e.g. 91 98765 43210) so WhatsApp opens the right chat.
-      </p>
       <div className="mt-4 flex items-center gap-2">
         <button
           disabled={busy}

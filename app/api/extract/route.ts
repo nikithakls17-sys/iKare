@@ -1,4 +1,4 @@
-import { extractMoments } from "@/lib/ai";
+import { aiConfigured, extractMoments } from "@/lib/ai";
 
 export const maxDuration = 60;
 
@@ -8,18 +8,16 @@ export async function POST(request: Request) {
     if (!body.image && !body.text?.trim()) {
       return Response.json({ moments: [], error: "Add a screenshot or a note first." }, { status: 400 });
     }
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return Response.json(
-        { moments: [], error: "ANTHROPIC_API_KEY is not set on the server." },
-        { status: 500 },
-      );
+    if (!aiConfigured()) {
+      return Response.json({ moments: [], error: "OPENAI_API_KEY is not set on the server." }, { status: 500 });
     }
     const moments = await extractMoments({
       image: body.image,
       mediaType: body.mediaType,
-      text: body.text,
+      text: typeof body.text === "string" ? body.text.slice(-30000) : undefined,
       today: body.today,
       knownPeople: Array.isArray(body.knownPeople) ? body.knownPeople : [],
+      peopleContext: Array.isArray(body.peopleContext) ? body.peopleContext : [],
     });
     return Response.json({ moments });
   } catch (err) {

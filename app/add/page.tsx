@@ -1,15 +1,16 @@
 "use client";
 
-import { ImageIcon, Loader2, NotebookPen, Sparkles, Upload, X } from "lucide-react";
+import { FileText, ImageIcon, Loader2, NotebookPen, Sparkles, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useToday } from "@/components/today-provider";
 import { createMoments, createPerson } from "@/lib/store";
+import { localDateStr } from "@/lib/tz";
 import { CATEGORY_META, type ExtractedMoment } from "@/lib/types";
 import { useData } from "@/lib/use-data";
 
-type Mode = "screenshot" | "note";
+type Mode = "screenshot" | "export" | "note";
 type Draft = ExtractedMoment & { keep: boolean; personId: string }; // personId "" = create new
 
 const SAMPLES = [
@@ -46,6 +47,7 @@ export default function AddPage() {
   const [mode, setMode] = useState<Mode>("screenshot");
   const [image, setImage] = useState<{ data: string; mediaType: string; preview: string } | null>(null);
   const [note, setNote] = useState("");
+  const [exportFile, setExportFile] = useState<{ name: string; withName: string | null; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [lineIdx, setLineIdx] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +78,15 @@ export default function AddPage() {
     setImage(await toBase64Image(blob));
   };
 
-  const canExtract = mode === "screenshot" ? Boolean(image) : note.trim().length > 0;
+  const canExtract =
+    mode === "screenshot" ? Boolean(image) : mode === "export" ? Boolean(exportFile) : note.trim().length > 0;
+
+  const exportPrompt = () =>
+    exportFile
+      ? `This is an exported WhatsApp chat${
+          exportFile.withName ? ` with ${exportFile.withName}. Every other speaker is the user ("Me")` : ""
+        }. Only the most recent lines are included; focus on moments that are still upcoming or recent.\n\n${exportFile.text}`
+      : "";
 
   const extract = async () => {
     setLoading(true);
@@ -89,9 +99,14 @@ export default function AddPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...(mode === "screenshot" ? { image: image?.data, mediaType: image?.mediaType } : { text: note }),
+          ...(mode === "screenshot"
+            ? { image: image?.data, mediaType: image?.mediaType }
+            : { text: mode === "export" ? exportPrompt() : note }),
           today: todayStr,
           knownPeople: people.map((p) => p.name),
+          peopleContext: people
+            .filter((p) => p.timezone)
+            .map((p) => `${p.name}: lives in ${p.timezone}, today there is ${localDateStr(p.timezone!)}`),
         }),
       });
       const json = await res.json();
@@ -159,10 +174,11 @@ export default function AddPage() {
       <h1 className="font-display text-4xl font-bold tracking-tight">Add a moment</h1>
       <p className="mt-1 text-muted">Share what a friend told you. iCare finds what&apos;s worth following up on.</p>
 
-      <div className="mt-6 inline-flex rounded-full border border-line bg-paper p-1">
+      <div className="mt-6 flex w-full max-w-md rounded-full border border-line bg-paper p-1">
         {(
           [
             ["screenshot", "Screenshot", ImageIcon],
+            ["export", "Chat export", FileText],
             ["note", "Quick note", NotebookPen],
           ] as const
         ).map(([key, label, Icon]) => (
@@ -173,7 +189,7 @@ export default function AddPage() {
               setDrafts(null);
               setError(null);
             }}
-            className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-2 py-2 text-sm font-bold transition ${
               mode === key ? "bg-ink text-white" : "text-muted hover:text-ink"
             }`}
           >
@@ -228,6 +244,43 @@ export default function AddPage() {
               </div>
             </>
           )
+        ) : mode === "export" ? (
+          <label className="block cursor-pointer rounded-3xl border-2 border-dashed border-line bg-paper px-6 py-10 text-center transition hover:border-coral">
+            <input
+              type="file"
+              accept=".txt,text/plain"
+              className="sr-only"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setDrafts(null);
+                setError(null);
+                const text = await file.text();
+                // "WhatsApp Chat with Priya.txt" tells us who the other person is.
+                const withName = file.name.match(/chat with (.+?)(\.txt)?$/i)?.[1]?.trim() ?? null;
+                setExportFile({ name: file.name, withName, text: text.split(/\r?\n/).slice(-400).join("\n") });
+              }}
+            />
+            <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-peach text-coral">
+              <FileText className="h-6 w-6" />
+            </div>
+            {exportFile ? (
+              <>
+                <p className="font-bold">{exportFile.name}</p>
+                <p className="mt-1 text-sm text-muted">
+                  {exportFile.text.split("\n").length} recent lines ready · tap to pick another
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-bold">Upload a WhatsApp chat export (.txt)</p>
+                <p className="mx-auto mt-1 max-w-sm text-sm text-muted">
+                  In WhatsApp: open a chat → ⋮ / contact name → <b>Export chat</b> → <b>Without media</b>. On iPhone,
+                  unzip it and pick <i>_chat.txt</i>.
+                </p>
+              </>
+            )}
+          </label>
         ) : (
           <textarea
             value={note}

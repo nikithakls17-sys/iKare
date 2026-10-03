@@ -1,26 +1,33 @@
-import Anthropic from "@anthropic-ai/sdk";
+import "server-only";
+import OpenAI from "openai";
 import { CATEGORIES, type ExtractedMoment } from "./types";
 
 // All AI logic lives here so the provider can be swapped in one place.
-const MODEL = "claude-sonnet-5-5";
+const MODEL = process.env.OPENAI_MODEL || "gpt-6-sol";
 
-const SYSTEM_PROMPT = `You help someone stay present for the friends and family they already love.
+let client: OpenAI | null = null;
+const openai = () => (client ??= new OpenAI());
 
-You will be given a chat screenshot and/or a short note written by the user. Find the moments where the OTHER person shared something happening in their life that deserves a follow-up: job interviews, exams, doctor appointments, feeling sick, trips, celebrations, big news, or tough times.
+export const aiConfigured = () => Boolean(process.env.OPENAI_API_KEY);
+
+const EXTRACT_PROMPT = `You help someone stay present for the friends and family they already love, many of whom live in other countries and time zones.
+
+You will be given a chat (screenshot, exported chat text, or live messages) and/or a short note written by the user. Find the moments where the OTHER person shared something happening in their life that deserves a follow-up: job interviews, exams, doctor appointments, feeling sick, trips, celebrations, big news, or tough times.
 
 Rules:
-- Ignore small talk, logistics ("see you at 7"), and anything about the user themselves. In a chat screenshot, the user's own messages are usually on the right side; the other person's are on the left. The chat header usually shows the other person's name.
-- If someone mentions a third person (e.g. "my mom has surgery Friday"), the follow-up is still with the person who told you, so use the sender's name.
-- In a note, the user names the person directly (e.g. "Sam has his driving test on Friday" is about Sam).
-- Resolve relative dates ("Monday", "next week", "tomorrow", "tonight") against the provided today date. If a weekday is named, use the next occurrence on or after today.
-- followupDate: usually the day after the event. For an event later the same day, use the same day. For "feeling sick", stress, or tough times with no date, use 2 days after today. For trips, the day after they return if known, otherwise the day after they leave.
-- suggestedMessage: a short, warm, casual text (1-2 sentences, at most one emoji), written the way a caring friend would actually text. Reference the specific thing. Never robotic or formal.
-- title: 2-4 words, e.g. "Job interview", "Driving test", "Doctor visit".
-- detail: one sentence of context.
+- Ignore small talk, logistics ("see you at 7"), and anything about the user themselves. In a chat screenshot, the user's own messages are usually on the right; the other person's are on the left. In text transcripts the user's lines start with "Me:".
+- If someone mentions a third person ("my mom has surgery Friday"), the follow-up is still with the person who told you, so use the sender's name.
+- In a note, the user names the person directly ("Sam has his driving test on Friday" is about Sam).
+- Dates: resolve relative dates ("Monday", "tomorrow", "tonight") against TODAY IN THAT PERSON'S TIME ZONE when it is given, otherwise the user's today. A named weekday means the next occurrence on or after today.
+- followupDate: usually the day after the event. For an event later the same day, the same day. For "feeling sick", stress, or tough times with no date, 2 days after today. For trips, the day after they return if known, otherwise the day after they leave.
+- suggestedMessage: a short, warm, casual text (1-2 sentences, at most one emoji) the way a caring friend would actually text. Reference the specific thing. Match the language the person writes in. Never robotic or formal.
+- title: 2-4 words, e.g. "Job interview", "Driving test", "Doctor visit". detail: one sentence of context.
 - Match personName to one of the known people when it is clearly the same person, using their exact spelling. If no name is visible, use a sensible label like "Friend".
-- Return an empty moments array if nothing qualifies.`;
+- Only include moments that were not already handled. Return an empty moments array if nothing qualifies.`;
 
-const SCHEMA = {
+const nullableString = { type: ["string", "null"] };
+
+const EXTRACT_SCHEMA = {
   type: "object",
   additionalProperties: false,
   required: ["moments"],
@@ -30,21 +37,13 @@ const SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: [
-          "personName",
-          "title",
-          "detail",
-          "category",
-          "eventDate",
-          "followupDate",
-          "suggestedMessage",
-        ],
+        required: ["personName", "title", "detail", "category", "eventDate", "followupDate", "suggestedMessage"],
         properties: {
           personName: { type: "string" },
           title: { type: "string" },
           detail: { type: "string" },
           category: { type: "string", enum: [...CATEGORIES] },
-          eventDate: { type: ["string", "null"], description: "YYYY-MM-DD or null" },
+          eventDate: { ...nullableString, description: "YYYY-MM-DD or null" },
           followupDate: { type: "string", description: "YYYY-MM-DD" },
           suggestedMessage: { type: "string" },
         },
@@ -59,52 +58,83 @@ export type ExtractInput = {
   text?: string;
   today: string;
   knownPeople: string[];
+  /** e.g. ["Priya: Europe/London, today is 2026-10-04"] */
+  peopleContext?: string[];
 };
 
-const IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"] as const;
-type ImageType = (typeof IMAGE_TYPES)[number];
-
-let client: Anthropic | null = null;
+async function jsonCompletion<T>(
+  system: string,
+  content: OpenAI.Chat.Completions.ChatCompletionContentPart[],
+  name: string,
+  schema: Record<string, unknown>,
+): Promise<T> {
+  const res = await openai().chat.completions.create({
+    model: MODEL,
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content },
+    ],
+    response_format: { type: "json_schema", json_schema: { name, schema, strict: true } },
+  });
+  const choice = res.choices[0];
+  if (choice?.message.refusal) throw new Error("The model declined this request.");
+  return JSON.parse(choice?.message.content ?? "{}") as T;
+}
 
 export async function extractMoments(input: ExtractInput): Promise<ExtractedMoment[]> {
-  client ??= new Anthropic();
-  const weekday = new Date(`${input.today}T12:00:00`).toLocaleDateString("en-US", {
-    weekday: "long",
-  });
-
-  const content: Anthropic.Beta.BetaContentBlockParam[] = [];
+  const weekday = new Date(`${input.today}T12:00:00`).toLocaleDateString("en-US", { weekday: "long" });
+  const content: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
   if (input.image) {
-    const mediaType = (IMAGE_TYPES as readonly string[]).includes(input.mediaType ?? "")
-      ? (input.mediaType as ImageType)
-      : "image/png";
-    content.push({
-      type: "image",
-      source: { type: "base64", media_type: mediaType, data: input.image },
-    });
+    const type = input.mediaType || "image/jpeg";
+    content.push({ type: "image_url", image_url: { url: `data:${type};base64,${input.image}` } });
   }
   content.push({
     type: "text",
     text: [
-      `Today is ${weekday}, ${input.today}.`,
+      `User's today: ${weekday}, ${input.today}.`,
       `Known people: ${input.knownPeople.length ? input.knownPeople.join(", ") : "(none yet)"}.`,
-      input.text?.trim() ? `Note from the user:\n${input.text.trim()}` : "Read the chat screenshot above.",
-    ].join("\n"),
+      input.peopleContext?.length ? `Time zones:\n${input.peopleContext.join("\n")}` : "",
+      input.text?.trim() ? `Chat or note:\n${input.text.trim()}` : "Read the chat screenshot above.",
+    ]
+      .filter(Boolean)
+      .join("\n"),
   });
 
-  const response = await client.beta.messages.create({
-    model: MODEL,
-    max_tokens: 8000,
-    // Server-side fallback: if a safety classifier declines, the API retries on a fallback model.
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content }],
-  });
-
-  if (response.stop_reason === "refusal") throw new Error("The model declined this request.");
-
-  const text = response.content.map((b) => (b.type === "text" ? b.text : "")).join("");
-  const parsed = JSON.parse(text) as { moments?: ExtractedMoment[] };
+  const parsed = await jsonCompletion<{ moments?: ExtractedMoment[] }>(
+    EXTRACT_PROMPT,
+    content,
+    "moments",
+    EXTRACT_SCHEMA,
+  );
   return (parsed.moments ?? []).filter((m) => m.personName && m.title && m.followupDate);
+}
+
+const DRAFT_PROMPT = `You help someone keep in touch with friends and family, often across countries and time zones.
+Write ONE short, warm, casual text message (1-2 sentences, at most one emoji) to reconnect with someone they haven't talked to in a while.
+Make it specific when context allows (shared history, something going on in their life, their city or local time of day). Never guilt-trip, never formal, no "I hope this message finds you well".`;
+
+export async function draftReconnect(ctx: {
+  name: string;
+  relationship: string | null;
+  daysSince: number | null;
+  city: string | null;
+  localTime: string | null;
+  recent: string[];
+}): Promise<string> {
+  const text = [
+    `Name: ${ctx.name}`,
+    ctx.relationship && `Relationship: ${ctx.relationship}`,
+    ctx.daysSince !== null && `Days since you last talked: ${ctx.daysSince}`,
+    ctx.city && `They live in: ${ctx.city} (local time there: ${ctx.localTime})`,
+    ctx.recent.length && `Things they shared before:\n- ${ctx.recent.join("\n- ")}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const parsed = await jsonCompletion<{ message: string }>(DRAFT_PROMPT, [{ type: "text", text }], "draft", {
+    type: "object",
+    additionalProperties: false,
+    required: ["message"],
+    properties: { message: { type: "string" } },
+  });
+  return parsed.message;
 }

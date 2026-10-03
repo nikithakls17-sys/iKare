@@ -1,147 +1,152 @@
 "use client";
 
-import { addDays, format } from "date-fns";
-import { supabase } from "./supabase";
-import type { Moment, Person } from "./types";
+import { addDays, format, subDays } from "date-fns";
+import { guessTimezone } from "./tz";
+import type { Moment, OutboxItem, Person, TableName, Tables } from "./types";
 
-// Data access for the single demo user. Uses Supabase when configured,
-// otherwise falls back to localStorage so the app always works.
+// Client data access. Talks to /api/db (Supabase or local file on the server) when
+// available, otherwise falls back to localStorage so the deployed demo always works.
 
-export const usingSupabase = Boolean(supabase);
+type Mode = "server" | "local";
+let modePromise: Promise<Mode> | null = null;
 
-type NewPerson = Pick<Person, "name"> & Partial<Omit<Person, "id" | "created_at">>;
-type NewMoment = Omit<Moment, "id" | "created_at" | "completed_at" | "status"> &
-  Partial<Pick<Moment, "status" | "completed_at">>;
+export type Snapshot = { people: Person[]; moments: Moment[]; outbox: OutboxItem[] };
 
-const PEOPLE_KEY = "icare.people";
-const MOMENTS_KEY = "icare.moments";
+async function mode(): Promise<Mode> {
+  modePromise ??= fetch("/api/db")
+    .then((r) => r.json())
+    .then((j) => (j.mode === "none" || j.error ? "local" : "server") as Mode)
+    .catch(() => "local" as Mode);
+  return modePromise;
+}
 
-function readLocal<T>(key: string): T[] {
+export async function storageMode() {
+  return mode();
+}
+
+// ---- localStorage backend ----
+const key = (t: TableName) => `icare.${t}`;
+function readLocal<T extends TableName>(t: T): Tables[T][] {
   try {
-    return JSON.parse(localStorage.getItem(key) ?? "[]") as T[];
+    return JSON.parse(localStorage.getItem(key(t)) ?? "[]");
   } catch {
     return [];
   }
 }
-
-function writeLocal<T>(key: string, rows: T[]) {
+function writeLocal<T extends TableName>(t: T, rows: Tables[T][]) {
   try {
-    localStorage.setItem(key, JSON.stringify(rows));
-  } catch {
-    // storage unavailable (private mode) - nothing to do
-  }
+    localStorage.setItem(key(t), JSON.stringify(rows));
+  } catch {}
 }
 
-const now = () => new Date().toISOString();
-
-export async function listPeople(): Promise<Person[]> {
-  if (supabase) {
-    const { data, error } = await supabase.from("people").select("*").order("name");
-    if (error) throw error;
-    return data as Person[];
-  }
-  return readLocal<Person>(PEOPLE_KEY).sort((a, b) => a.name.localeCompare(b.name));
+async function api(body: object) {
+  const res = await fetch("/api/db", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? "Save failed");
+  return json;
 }
 
-export async function listMoments(): Promise<Moment[]> {
-  if (supabase) {
-    const { data, error } = await supabase.from("moments").select("*").order("followup_date");
-    if (error) throw error;
-    return data as Moment[];
+async function insertRows<T extends TableName>(
+  table: T,
+  rows: Omit<Tables[T], "id" | "created_at">[],
+): Promise<Tables[T][]> {
+  if ((await mode()) === "server") return (await api({ op: "insert", table, rows })).rows;
+  const created = rows.map(
+    (r) => ({ ...r, id: crypto.randomUUID(), created_at: new Date().toISOString() }) as Tables[T],
+  );
+  writeLocal(table, [...readLocal(table), ...created]);
+  return created;
+}
+
+async function updateRow<T extends TableName>(table: T, id: string, patch: Partial<Tables[T]>) {
+  if ((await mode()) === "server") return void (await api({ op: "update", table, id, patch }));
+  writeLocal(
+    table,
+    readLocal(table).map((r) => (r.id === id ? { ...r, ...patch } : r)),
+  );
+}
+
+export async function loadAll(): Promise<Snapshot> {
+  if ((await mode()) === "server") {
+    const j = await (await fetch("/api/db", { cache: "no-store" })).json();
+    if (j.error) throw new Error(j.error);
+    return { people: j.people, moments: j.moments, outbox: j.outbox };
   }
-  return readLocal<Moment>(MOMENTS_KEY).sort((a, b) => a.followup_date.localeCompare(b.followup_date));
+  return { people: readLocal("people"), moments: readLocal("moments"), outbox: readLocal("outbox") };
+}
+
+// ---- people ----
+export type NewPerson = Pick<Person, "name"> & Partial<Omit<Person, "id" | "created_at">>;
+
+export function personRow(p: NewPerson): Omit<Person, "id" | "created_at"> {
+  const phone = p.phone?.trim() || null;
+  return {
+    name: p.name.trim() || "Friend",
+    phone,
+    relationship: p.relationship?.trim() || null,
+    emoji: p.emoji || "🙂",
+    timezone: p.timezone || guessTimezone(phone),
+    whatsapp_id: p.whatsapp_id ?? null,
+    last_contact_at: p.last_contact_at ?? null,
+    contact_every_days: p.contact_every_days ?? 14,
+  };
 }
 
 export async function createPerson(p: NewPerson): Promise<Person> {
-  const row = {
-    name: p.name.trim(),
-    phone: p.phone?.trim() || null,
-    relationship: p.relationship?.trim() || null,
-    emoji: p.emoji || "🙂",
-  };
-  if (supabase) {
-    const { data, error } = await supabase.from("people").insert(row).select().single();
-    if (error) throw error;
-    return data as Person;
-  }
-  const person: Person = { ...row, id: crypto.randomUUID(), created_at: now() };
-  writeLocal(PEOPLE_KEY, [...readLocal<Person>(PEOPLE_KEY), person]);
-  return person;
+  return (await insertRows("people", [personRow(p)]))[0];
 }
 
-export async function updatePerson(id: string, patch: Partial<Person>) {
-  if (supabase) {
-    const { error } = await supabase.from("people").update(patch).eq("id", id);
-    if (error) throw error;
-    return;
-  }
-  writeLocal(
-    PEOPLE_KEY,
-    readLocal<Person>(PEOPLE_KEY).map((p) => (p.id === id ? { ...p, ...patch } : p)),
-  );
-}
+export const updatePerson = (id: string, patch: Partial<Person>) => updateRow("people", id, patch);
 
 export async function deletePerson(id: string) {
-  if (supabase) {
-    const { error } = await supabase.from("people").delete().eq("id", id);
-    if (error) throw error;
-    return;
-  }
-  writeLocal(PEOPLE_KEY, readLocal<Person>(PEOPLE_KEY).filter((p) => p.id !== id));
-  writeLocal(MOMENTS_KEY, readLocal<Moment>(MOMENTS_KEY).filter((m) => m.person_id !== id));
+  if ((await mode()) === "server") return void (await api({ op: "remove", table: "people", id }));
+  writeLocal("people", readLocal("people").filter((p) => p.id !== id));
+  writeLocal("moments", readLocal("moments").filter((m) => m.person_id !== id));
+  writeLocal("outbox", readLocal("outbox").filter((o) => o.person_id !== id));
 }
+
+// ---- moments ----
+type NewMoment = Omit<Moment, "id" | "created_at" | "completed_at" | "status"> &
+  Partial<Pick<Moment, "status" | "completed_at">>;
 
 export async function createMoments(rows: NewMoment[]) {
-  const full = rows.map((r) => ({ status: "pending" as const, completed_at: null, ...r }));
-  if (supabase) {
-    const { error } = await supabase.from("moments").insert(full);
-    if (error) throw error;
-    return;
-  }
-  const created: Moment[] = full.map((r) => ({ ...r, id: crypto.randomUUID(), created_at: now() }));
-  writeLocal(MOMENTS_KEY, [...readLocal<Moment>(MOMENTS_KEY), ...created]);
-}
-
-export async function updateMoment(id: string, patch: Partial<Moment>) {
-  if (supabase) {
-    const { error } = await supabase.from("moments").update(patch).eq("id", id);
-    if (error) throw error;
-    return;
-  }
-  writeLocal(
-    MOMENTS_KEY,
-    readLocal<Moment>(MOMENTS_KEY).map((m) => (m.id === id ? { ...m, ...patch } : m)),
+  await insertRows(
+    "moments",
+    rows.map((r) => ({ status: "pending" as const, completed_at: null, ...r })),
   );
 }
 
+export const updateMoment = (id: string, patch: Partial<Moment>) => updateRow("moments", id, patch);
+export const updateOutbox = (id: string, patch: Partial<OutboxItem>) => updateRow("outbox", id, patch);
+
 export async function clearAll() {
-  if (supabase) {
-    // cascades to moments
-    const { error } = await supabase.from("people").delete().not("id", "is", null);
-    if (error) throw error;
-    return;
-  }
-  writeLocal(PEOPLE_KEY, []);
-  writeLocal(MOMENTS_KEY, []);
+  if ((await mode()) === "server") return void (await api({ op: "clear" }));
+  (["people", "moments", "outbox"] as const).forEach((t) => writeLocal(t, []));
 }
 
 /** Replace everything with realistic demo data, dated relative to `today`. */
 export async function seedDemo(today: Date) {
   await clearAll();
   const d = (n: number) => format(addDays(today, n), "yyyy-MM-dd");
+  const ago = (n: number) => subDays(new Date(), n).toISOString();
 
-  const [priya, mom, sam, arjun, leah] = await Promise.all([
-    createPerson({ name: "Priya", relationship: "best friend", emoji: "🌻", phone: "" }),
-    createPerson({ name: "Mom", relationship: "mom", emoji: "💛", phone: "" }),
-    createPerson({ name: "Sam", relationship: "brother", emoji: "🚗", phone: "" }),
-    createPerson({ name: "Arjun", relationship: "college friend", emoji: "🎸", phone: "" }),
-    createPerson({ name: "Leah", relationship: "coworker", emoji: "🌿", phone: "" }),
+  const [priya, mom, sam, arjun, leah, kenji] = await insertRows("people", [
+    personRow({ name: "Priya", relationship: "best friend", emoji: "🌻", timezone: "Europe/London", last_contact_at: ago(2) }),
+    personRow({ name: "Mom", relationship: "mom", emoji: "💛", timezone: "Asia/Kolkata", last_contact_at: ago(1), contact_every_days: 3 }),
+    personRow({ name: "Sam", relationship: "brother", emoji: "🚗", timezone: "America/Toronto", last_contact_at: ago(6), contact_every_days: 7 }),
+    personRow({ name: "Arjun", relationship: "college friend", emoji: "🎸", timezone: "America/Los_Angeles", last_contact_at: ago(4) }),
+    personRow({ name: "Leah", relationship: "coworker", emoji: "🌿", timezone: "Australia/Sydney", last_contact_at: ago(3), contact_every_days: 21 }),
+    personRow({ name: "Kenji", relationship: "old roommate", emoji: "🍜", timezone: "Asia/Tokyo", last_contact_at: ago(34), contact_every_days: 30 }),
   ]);
+  void kenji;
 
-  const doneAt = (n: number) => new Date(addDays(today, n)).toISOString();
+  const doneAt = (n: number) => addDays(today, n).toISOString();
 
   await createMoments([
-    // due today
     {
       person_id: arjun.id,
       title: "Feeling sick",
@@ -155,14 +160,13 @@ export async function seedDemo(today: Date) {
     {
       person_id: leah.id,
       title: "Moving apartments",
-      detail: "Leah moved into her new place yesterday.",
+      detail: "Leah moved into her new place in Sydney yesterday.",
       category: "celebration",
       event_date: d(-1),
       followup_date: d(0),
       suggested_message: "How's the new place?! Hope the move wasn't too brutal 🏡",
       source: "screenshot",
     },
-    // coming up
     {
       person_id: sam.id,
       title: "Driving test",
@@ -183,7 +187,6 @@ export async function seedDemo(today: Date) {
       suggested_message: "You ran a HALF MARATHON?! So proud of you, how are the legs? 🏃‍♀️",
       source: "note",
     },
-    // history: show-ups for the People page
     ...[-30, -21, -12].map((n, i) => ({
       person_id: priya.id,
       title: ["Exam results", "Sister's wedding", "Apartment hunt"][i],
