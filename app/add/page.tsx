@@ -95,7 +95,10 @@ export default function AddPage() {
         }),
       });
       const json = await res.json();
-      if (json.error) setError(json.error);
+      if (json.error) {
+        setError(json.error);
+        return;
+      }
       const found: ExtractedMoment[] = json.moments ?? [];
       setDrafts(
         found.map((m) => ({
