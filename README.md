@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💛 iCare
 
-## Getting Started
+**Never miss the moments that matter to the people you love.**
 
-First, run the development server:
+People don't forget their friends exist. They forget the *follow-up*. A friend says "my interview is Monday", Mom mentions a doctor visit Thursday, and life gets busy before you ever ask how it went.
+
+iCare turns what people tell you into chances to show up for them:
+
+1. **Capture**: drop in a chat screenshot or type a quick note.
+2. **Detect**: Claude finds the moments (interview, exam, appointment, feeling sick, trip, big news) and picks the right day to check in.
+3. **Remind**: on that day, a card appears in **Today**: *"Ask Priya how the job interview went."*
+4. **Show up**: one tap opens WhatsApp or SMS with a warm message pre-typed. You edit it and send it yourself.
+
+> AI is a bridge, not a replacement. iCare never texts anyone on its own.
+> 🔒 Screenshots are processed and discarded. Only the extracted moments are saved.
+
+## Stack
+
+Next.js (App Router) + TypeScript · Tailwind CSS · Claude API (`claude-sonnet-5-5`, vision + structured JSON output) · Supabase (Postgres) · `wa.me` / `sms:` deep links · Vercel.
+
+All AI logic is in `lib/ai.ts`, so the model or provider can be swapped in one place.
+
+## Run locally
 
 ```bash
+npm install
+cp .env.example .env.local   # add your ANTHROPIC_API_KEY
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000/?demo=1
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Supabase is optional.** Without Supabase keys, iCare saves data in the browser's localStorage, so the demo works out of the box. To use Supabase:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a project at supabase.com.
+2. In the SQL Editor, run `supabase/schema.sql`.
+3. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.local` (and to Vercel).
 
-## Learn More
+## Deploy
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx vercel            # first time: log in and link the project
+npx vercel env add ANTHROPIC_API_KEY
+npx vercel --prod
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Demo mode
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Add `?demo=1` to any URL to show the **time travel** bar (it stays on until `?demo=0`):
 
-## Deploy on Vercel
+- **Date picker / +1 day**: change what "today" means, so cards appear on their follow-up day.
+- **Reset demo data**: loads 5 people, 2 cards due today, 2 coming up, and show-up history (Priya starts with 3).
+- Sample screenshots are in `public/demo/`, and you can load them from the Add page with one click.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 2-minute demo script
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Hook:** "Your friend tells you her interview is Monday. You care. Monday comes, and you forget to ask. She notices."
+2. **Reset demo data** → Today shows Arjun (sick) and Leah (new apartment).
+3. **Add → Priya's chat → Find moments** → it detects the Deloitte interview and ignores the coffee small talk. Save.
+4. **Add → Family group** → it finds Mom's doctor visit and Sam feeling sick, and skips Dad's dinner logistics.
+5. **Time travel** to the day after Monday → "Ask Priya how the job interview went" appears.
+6. **Send on WhatsApp** → WhatsApp opens with the message pre-typed.
+7. **People** → "Priya: 4 showed up."
+8. **Close:** "iCare doesn't text for you. It helps *you* be there."
