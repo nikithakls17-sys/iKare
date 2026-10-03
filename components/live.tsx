@@ -11,6 +11,7 @@ export type WAState = {
   me: string | null;
   error: string | null;
   log: { at: string; text: string }[];
+  scanning?: boolean;
 };
 
 /** Polls WhatsApp link status from the server. */

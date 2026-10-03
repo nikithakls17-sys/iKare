@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getStatus, logoutWhatsApp, startWhatsApp, whatsappEnabled } from "@/lib/server/whatsapp";
+import { getStatus, logoutWhatsApp, rescan, startWhatsApp, whatsappEnabled } from "@/lib/server/whatsapp";
 
 export async function GET() {
   // Resume a previously linked session automatically.
@@ -17,5 +17,6 @@ export async function POST(request: Request) {
   }
   if (action === "connect") await startWhatsApp();
   if (action === "logout") await logoutWhatsApp();
+  if (action === "scan") void rescan();
   return Response.json(getStatus());
 }

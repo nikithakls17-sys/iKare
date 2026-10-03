@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Loader2, LogOut, ShieldCheck, Smartphone } from "lucide-react";
+import { CheckCircle2, Loader2, LogOut, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
 import { useState } from "react";
 import { useWhatsApp } from "@/components/live";
 
@@ -8,7 +8,7 @@ export default function ConnectPage() {
   const wa = useWhatsApp(2500);
   const [busy, setBusy] = useState(false);
 
-  const act = async (action: "connect" | "logout") => {
+  const act = async (action: "connect" | "logout" | "scan") => {
     setBusy(true);
     await fetch("/api/whatsapp", {
       method: "POST",
@@ -40,13 +40,23 @@ export default function ConnectPage() {
             <CheckCircle2 className="mx-auto h-14 w-14 text-emerald-500" />
             <p className="mt-3 text-xl font-bold">Connected{wa.me ? ` as +${wa.me}` : ""}</p>
             <p className="mt-1 text-muted">New messages are being read for moments. Nothing sends without your OK.</p>
-            <button
-              onClick={() => act("logout")}
-              disabled={busy}
-              className="mx-auto mt-5 flex items-center gap-2 rounded-full border border-line px-5 py-2.5 font-bold hover:bg-peach"
-            >
-              <LogOut className="h-4 w-4" /> Unlink
-            </button>
+            <div className="mt-5 flex justify-center gap-2">
+              <button
+                onClick={() => act("scan")}
+                disabled={busy || wa.scanning}
+                className="flex items-center gap-2 rounded-full bg-coral px-5 py-2.5 font-bold text-white hover:bg-coral-dark disabled:opacity-60"
+              >
+                {wa.scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                {wa.scanning ? "Reading chats…" : "Scan recent chats"}
+              </button>
+              <button
+                onClick={() => act("logout")}
+                disabled={busy}
+                className="flex items-center gap-2 rounded-full border border-line px-5 py-2.5 font-bold hover:bg-peach"
+              >
+                <LogOut className="h-4 w-4" /> Unlink
+              </button>
+            </div>
           </div>
         ) : wa.status === "qr" && wa.qr ? (
           <div className="grid items-center gap-6 sm:grid-cols-2">

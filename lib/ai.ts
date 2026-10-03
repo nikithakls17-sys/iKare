@@ -18,6 +18,7 @@ Rules:
 - Ignore small talk, logistics ("see you at 7"), and anything about the user themselves. In a chat screenshot, the user's own messages are usually on the right; the other person's are on the left. In text transcripts the user's lines start with "Me:".
 - If someone mentions a third person ("my mom has surgery Friday"), the follow-up is still with the person who told you, so use the sender's name.
 - In a note, the user names the person directly ("Sam has his driving test on Friday" is about Sam).
+- Transcript lines may start with a [timestamp]: resolve relative dates against when that message was sent, then make sure followupDate is not in the past (if the event already happened and was never followed up, use today).
 - Dates: resolve relative dates ("Monday", "tomorrow", "tonight") against TODAY IN THAT PERSON'S TIME ZONE when it is given, otherwise the user's today. A named weekday means the next occurrence on or after today.
 - followupDate: usually the day after the event. For an event later the same day, the same day. For "feeling sick", stress, or tough times with no date, 2 days after today. For trips, the day after they return if known, otherwise the day after they leave.
 - suggestedMessage: a short, warm, casual text (1-2 sentences, at most one emoji) the way a caring friend would actually text. Reference the specific thing. Match the language the person writes in. Never robotic or formal.

@@ -12,7 +12,12 @@ import * as db from "./db";
 
 export type WAStatus = "off" | "starting" | "qr" | "ready" | "error";
 
-type ChatBuffer = { lines: string[]; people: Map<string, string>; timer?: ReturnType<typeof setTimeout> };
+type ChatBuffer = {
+  title: string;
+  lines: string[];
+  people: Map<string, string>;
+  timer?: ReturnType<typeof setTimeout>;
+};
 
 type State = {
   client: WAClient | null;
@@ -23,6 +28,7 @@ type State = {
   buffers: Map<string, ChatBuffer>;
   scheduler: ReturnType<typeof setInterval> | null;
   log: { at: string; text: string }[];
+  scanning?: boolean;
 };
 
 const g = globalThis as unknown as { __icareWA?: State };
@@ -63,6 +69,7 @@ export function getStatus() {
     me: state.me,
     error: state.error,
     log: state.log.slice(0, 10),
+    scanning: Boolean(state.scanning),
   };
 }
 
@@ -86,6 +93,7 @@ export async function startWhatsApp() {
     state.qr = null;
     state.me = client.info?.wid?.user ?? null;
     note(`Connected as +${state.me}`);
+    scanRecentChats().catch((e) => console.error("[whatsapp] scan failed", e));
   });
   client.on("auth_failure", (m) => {
     state.status = "error";
@@ -124,6 +132,19 @@ export async function logoutWhatsApp() {
 
 // ---------- incoming messages ----------
 
+/** Real phone digits for a WhatsApp id. Private "@lid" ids hide the number, so look it up. */
+async function phoneFor(waId: string, fallback?: string): Promise<string> {
+  if (waId.endsWith("@c.us")) return waId.split("@")[0];
+  if (waId.endsWith("@lid") && state.client) {
+    try {
+      const [hit] = await state.client.getContactLidAndPhone([waId]);
+      if (hit?.pn) return hit.pn.split("@")[0];
+    } catch {}
+    return ""; // the lid digits are not a phone number
+  }
+  return fallback ?? "";
+}
+
 async function findOrCreatePerson(waId: string, phone: string, displayName: string): Promise<Person> {
   const people = await db.list("people");
   const digits = phone.replace(/\D/g, "");
@@ -159,10 +180,65 @@ async function findOrCreatePerson(waId: string, phone: string, displayName: stri
 }
 
 async function handleMessage(msg: Message) {
-  if (msg.type !== "chat" || !msg.body?.trim()) return;
-  if (msg.from === "status@broadcast" || msg.to === "status@broadcast") return;
+  const chatId = await ingest(msg);
+  if (!chatId) return;
+  if (!msg.fromMe) note(`Message in ${state.buffers.get(chatId)?.title ?? "a chat"}`);
 
-  const chat = await msg.getChat();
+  // Only analyse after the other person has spoken and the chat goes quiet for a moment.
+  const buf = state.buffers.get(chatId)!;
+  if (msg.fromMe || !aiConfigured() || buf.people.size === 0) return;
+  if (buf.timer) clearTimeout(buf.timer);
+  buf.timer = setTimeout(() => {
+    analyseChat(chatId).catch((e) => {
+      note(`AI error: ${e instanceof Error ? e.message.slice(0, 80) : e}`);
+      console.error("[whatsapp] extraction failed", e);
+    });
+  }, EXTRACT_DEBOUNCE_MS);
+}
+
+/** Read recent chats once after linking so iCare is useful immediately. */
+async function scanRecentChats() {
+  if (!state.client || state.scanning) return;
+  state.scanning = true;
+  try {
+    const cutoff = Date.now() / 1000 - 30 * 86400;
+    const chats = (await state.client.getChats())
+      .filter((c) => !c.archived && c.timestamp > cutoff && c.id.user !== state.me && c.id.server !== "broadcast")
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 15);
+    note(`Reading your ${chats.length} most recent chats…`);
+    let found = 0;
+    let aiOk = aiConfigured();
+    for (const chat of chats) {
+      const messages = await chat.fetchMessages({ limit: 30 });
+      for (const m of messages) await ingest(m, chat);
+      const buf = state.buffers.get(chat.id._serialized);
+      const recentIncoming = messages.some((m) => !m.fromMe && m.timestamp > Date.now() / 1000 - 14 * 86400);
+      if (buf && buf.people.size > 0 && recentIncoming && aiOk) {
+        try {
+          found += await analyseChat(chat.id._serialized);
+        } catch (e) {
+          note(`AI error: ${e instanceof Error ? e.message.slice(0, 80) : e}`);
+          if (e && typeof e === "object" && "status" in e && (e.status === 429 || e.status === 401)) aiOk = false;
+        }
+      }
+    }
+    note(aiConfigured() ? `Scan done: ${found} new moment${found === 1 ? "" : "s"}` : "Scan done (add an AI key to detect moments)");
+  } finally {
+    state.scanning = false;
+  }
+}
+
+export async function rescan() {
+  await scanRecentChats();
+}
+
+/** Records a message into the person list and chat buffer. Returns the chat id, or null if skipped. */
+async function ingest(msg: Message, knownChat?: Awaited<ReturnType<Message["getChat"]>>) {
+  if (msg.type !== "chat" || !msg.body?.trim()) return null;
+  if (msg.from === "status@broadcast" || msg.to === "status@broadcast") return null;
+
+  const chat = knownChat ?? (await msg.getChat());
   const chatId = chat.id._serialized;
   let person: Person | null = null;
   let speaker = "Me";
@@ -171,34 +247,33 @@ async function handleMessage(msg: Message) {
     if (!msg.fromMe) {
       const contact = await msg.getContact();
       const waId = msg.author ?? contact.id._serialized;
-      person = await findOrCreatePerson(waId, contact.number ?? "", contact.name || contact.pushname || "");
+      person = await findOrCreatePerson(waId, await phoneFor(waId, contact.number), contact.name || contact.pushname || "");
       speaker = person.name;
     }
   } else {
     const contact = await chat.getContact();
-    person = await findOrCreatePerson(chatId, contact.number ?? "", contact.name || contact.pushname || chat.name);
+    person = await findOrCreatePerson(chatId, await phoneFor(chatId, contact.number), contact.name || contact.pushname || chat.name);
     if (!msg.fromMe) speaker = person.name;
   }
 
-  if (person) await db.update("people", person.id, { last_contact_at: new Date(msg.timestamp * 1000).toISOString() });
+  const sentAt = new Date(msg.timestamp * 1000);
+  if (person && (!person.last_contact_at || new Date(person.last_contact_at) < sentAt)) {
+    await db.update("people", person.id, { last_contact_at: sentAt.toISOString() });
+  }
 
-  const buf: ChatBuffer = state.buffers.get(chatId) ?? { lines: [], people: new Map() };
+  const buf: ChatBuffer = state.buffers.get(chatId) ?? { lines: [], people: new Map(), title: chat.name };
   state.buffers.set(chatId, buf);
-  buf.lines.push(`${speaker}: ${msg.body.trim()}`);
-  buf.lines = buf.lines.slice(-20);
+  // Date prefix lets the AI resolve "Monday" relative to when it was said.
+  const stamp = sentAt.toISOString().slice(0, 16).replace("T", " ");
+  buf.lines.push(`[${stamp} UTC] ${speaker}: ${msg.body.trim()}`);
+  buf.lines = buf.lines.slice(-30);
   if (person && speaker !== "Me") buf.people.set(person.name, person.id);
-
-  // Only analyse after the other person has spoken and the chat goes quiet for a moment.
-  if (msg.fromMe || !aiConfigured()) return;
-  if (buf.timer) clearTimeout(buf.timer);
-  buf.timer = setTimeout(() => {
-    analyseChat(chatId).catch((e) => console.error("[whatsapp] extraction failed", e));
-  }, EXTRACT_DEBOUNCE_MS);
+  return chatId;
 }
 
-async function analyseChat(chatId: string) {
+async function analyseChat(chatId: string): Promise<number> {
   const buf = state.buffers.get(chatId);
-  if (!buf || buf.people.size === 0) return;
+  if (!buf || buf.people.size === 0) return 0;
   const transcript = buf.lines.join("\n");
   const people = await db.list("people");
   const inChat = people.filter((p) => [...buf.people.values()].includes(p.id));
@@ -212,7 +287,7 @@ async function analyseChat(chatId: string) {
       .filter((p) => p.timezone)
       .map((p) => `${p.name}: lives in ${p.timezone}, today there is ${localDateStr(p.timezone!)}`),
   });
-  if (found.length === 0) return;
+  if (found.length === 0) return 0;
 
   const moments = await db.list("moments");
   const rows = found
@@ -243,8 +318,9 @@ async function analyseChat(chatId: string) {
 
   if (rows.length) {
     await db.insert("moments", rows);
-    note(`Detected ${rows.map((r) => r.title).join(", ")}`);
+    note(`Detected ${rows.map((r) => r.title).join(", ")} in ${buf.title}`);
   }
+  return rows.length;
 }
 
 // ---------- sending ----------

@@ -9,6 +9,9 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    ".wwebjs_auth/**",
+    ".wwebjs_cache/**",
+    ".data/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
