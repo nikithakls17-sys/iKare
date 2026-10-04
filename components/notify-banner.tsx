@@ -26,7 +26,7 @@ export function NotifyBanner() {
       <p className="flex-1 text-sm">
         <b>Never miss a check-in.</b> Get a nudge when it&apos;s time to show up for someone.
       </p>
-      <Link href="/settings" className="shrink-0 bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-accent-deep">
+      <Link href="/settings" className="inline-flex min-h-12 shrink-0 items-center bg-accent px-4 text-sm font-bold text-on-accent hover:bg-accent-deep">
         Turn on
       </Link>
       <button
