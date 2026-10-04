@@ -190,7 +190,7 @@ export default function AddPage() {
               setError(null);
             }}
             className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-2 py-2 text-sm font-bold transition ${
-              mode === key ? "bg-ink text-white" : "text-muted hover:text-ink"
+              mode === key ? "bg-strong text-white" : "text-muted hover:text-ink"
             }`}
           >
             <Icon className="h-4 w-4" /> {label}
@@ -210,7 +210,7 @@ export default function AddPage() {
                   setDrafts(null);
                 }}
                 aria-label="Remove screenshot"
-                className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-ink/80 text-white hover:bg-ink"
+                className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-strong/80 text-white hover:bg-strong"
               >
                 <X className="h-4 w-4" />
               </button>

@@ -1,10 +1,10 @@
 "use client";
 
 import { addDays, format } from "date-fns";
-import { Heart, Home, Plus, Users } from "lucide-react";
+import { Heart, Home, Info, Monitor, Moon, Plus, Sun, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { seedDemo } from "@/lib/store";
 import { useWhatsApp } from "./live";
 import { useToday } from "./today-provider";
@@ -29,13 +29,13 @@ export function Header() {
           </Link>
           <div className="flex items-center gap-2">
           <WhatsAppPill />
-          <nav className="hidden gap-1 sm:flex">
+          <nav className="hidden gap-1 md:flex">
             {NAV.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
                 href={href}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  pathname === href ? "bg-ink text-white" : "text-muted hover:bg-peach hover:text-ink"
+                  isActive(pathname, href) ? "bg-strong text-white" : "text-muted hover:bg-peach hover:text-ink"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -43,19 +43,27 @@ export function Header() {
               </Link>
             ))}
           </nav>
+          <Link
+            href="/about"
+            aria-label="About iCare"
+            className={`grid h-9 w-9 place-items-center rounded-full transition hover:bg-peach ${pathname === "/about" ? "text-coral" : "text-muted"}`}
+          >
+            <Info className="h-5 w-5" />
+          </Link>
+          <ThemeToggle />
           </div>
         </div>
         <DemoBar />
       </header>
 
       {/* mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-line bg-paper/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-line bg-paper/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         {NAV.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
             className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-semibold ${
-              pathname === href ? "text-coral" : "text-muted"
+              isActive(pathname, href) ? "text-coral" : "text-muted"
             }`}
           >
             <Icon className="h-5 w-5" />
@@ -64,6 +72,44 @@ export function Header() {
         ))}
       </nav>
     </>
+  );
+}
+
+const isActive = (pathname: string, href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+
+type Theme = "system" | "light" | "dark";
+const THEME_ICON = { system: Monitor, light: Sun, dark: Moon };
+const NEXT_THEME: Record<Theme, Theme> = { system: "light", light: "dark", dark: "system" };
+
+function ThemeToggle() {
+  const [theme, setTheme] = useState<Theme>("system");
+  useEffect(() => {
+    try {
+      const t = localStorage.getItem("icare.theme");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- read saved preference after hydration
+      if (t === "light" || t === "dark") setTheme(t);
+    } catch {}
+  }, []);
+  const cycle = () => {
+    const next = NEXT_THEME[theme];
+    setTheme(next);
+    if (next === "system") delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = next;
+    try {
+      if (next === "system") localStorage.removeItem("icare.theme");
+      else localStorage.setItem("icare.theme", next);
+    } catch {}
+  };
+  const Icon = THEME_ICON[theme];
+  return (
+    <button
+      onClick={cycle}
+      aria-label={`Theme: ${theme}. Click to change.`}
+      title={`Theme: ${theme}`}
+      className="grid h-9 w-9 place-items-center rounded-full text-muted transition hover:bg-peach hover:text-ink"
+    >
+      <Icon className="h-5 w-5" />
+    </button>
   );
 }
 
@@ -93,7 +139,7 @@ function DemoBar() {
   const jump = (days: number) => setOverride(format(addDays(today, days), "yyyy-MM-dd"));
 
   return (
-    <div className="border-t border-line bg-ink text-white">
+    <div className="border-t border-line bg-strong text-white">
       <div className="mx-auto flex max-w-2xl flex-wrap items-center gap-2 px-4 py-2 text-sm">
         <span className="font-semibold">⏳ Time travel</span>
         <input

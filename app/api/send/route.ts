@@ -1,6 +1,6 @@
 import * as db from "@/lib/server/db";
 import { canReach, sendNow } from "@/lib/server/whatsapp";
-import { localTimeLabel, nextGoodTime, textWindow } from "@/lib/tz";
+import { localTimeLabel, nextGoodTime, nextMorning, textWindow, viewerTimezone } from "@/lib/tz";
 
 // Approve & send. "auto" respects the recipient's local time: if they're likely asleep,
 // the message is queued for their next good hour instead of buzzing them at 3 AM.
@@ -20,8 +20,15 @@ export async function POST(request: Request) {
     }
   };
 
-  if (when === "auto" && tz && textWindow(tz, now) !== "good") {
-    const sendAt = nextGoodTime(tz, now);
+  const holdUntil =
+    when === "morning"
+      ? nextMorning(tz ?? viewerTimezone(), now)
+      : when === "auto" && tz && textWindow(tz, now) !== "good"
+        ? nextGoodTime(tz, now)
+        : null;
+  if (holdUntil) {
+    const sendAt = holdUntil;
+    const zone = tz ?? viewerTimezone();
     await db.insert("outbox", [
       {
         person_id: person.id,
@@ -37,8 +44,8 @@ export async function POST(request: Request) {
     return Response.json({
       status: "scheduled",
       sendAt: sendAt.toISOString(),
-      theirTimeNow: localTimeLabel(tz, now),
-      theirTimeAtSend: localTimeLabel(tz, sendAt),
+      theirTimeNow: localTimeLabel(zone, now),
+      theirTimeAtSend: localTimeLabel(zone, sendAt),
     });
   }
 

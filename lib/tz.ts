@@ -104,6 +104,15 @@ export function nextGoodTime(tz: string, date = new Date()): Date {
   return new Date(localNine - tzOffsetMinutes(tz, guess) * 60_000);
 }
 
+/** The next 9:00 AM in tz strictly after date (today if it is still early there, else tomorrow). */
+export function nextMorning(tz: string, date = new Date()): Date {
+  const p = localParts(tz, date);
+  const dayOffset = p.h < GOOD_START ? 0 : 1;
+  const localNine = Date.UTC(p.y, p.mo, p.d + dayOffset, GOOD_START, 0);
+  const guess = new Date(localNine - tzOffsetMinutes(tz, date) * 60_000);
+  return new Date(localNine - tzOffsetMinutes(tz, guess) * 60_000);
+}
+
 /** "3h ahead", "9h 30m behind", "same time" relative to the viewer. */
 export function offsetLabel(tz: string, date = new Date()): string {
   const diff = tzOffsetMinutes(tz, date) - tzOffsetMinutes(viewerTimezone(), date);

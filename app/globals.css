@@ -10,6 +10,39 @@
   --coral-dark: #cf4f34;
   --peach: #fde7da;
   --sage: #e6f0e4;
+  --strong: #2b2118;
+  color-scheme: light;
+}
+
+/* Dark theme: follows the system unless the user picked light, or forced via the toggle. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --cream: #15110d;
+    --paper: #211a14;
+    --ink: #f5ebe1;
+    --muted: #b4a392;
+    --line: #382c23;
+    --coral: #f07a5e;
+    --coral-dark: #e8664a;
+    --peach: #3a281e;
+    --sage: #1d2b20;
+    --strong: #3b2f26;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --cream: #15110d;
+  --paper: #211a14;
+  --ink: #f5ebe1;
+  --muted: #b4a392;
+  --line: #382c23;
+  --coral: #f07a5e;
+  --coral-dark: #e8664a;
+  --peach: #3a281e;
+  --sage: #1d2b20;
+  --strong: #3b2f26;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -22,6 +55,7 @@
   --color-coral-dark: var(--coral-dark);
   --color-peach: var(--peach);
   --color-sage: var(--sage);
+  --color-strong: var(--strong);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
 }

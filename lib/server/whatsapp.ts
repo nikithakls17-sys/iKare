@@ -173,6 +173,7 @@ async function findOrCreatePerson(waId: string, phone: string, displayName: stri
       whatsapp_id: waId,
       last_contact_at: null,
       contact_every_days: 14,
+      favorite: false,
     },
   ]);
   note(`New person from WhatsApp: ${created.name}`);

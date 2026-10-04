@@ -22,6 +22,7 @@ export type Person = {
   whatsapp_id: string | null; // e.g. "447911123456@c.us"
   last_contact_at: string | null;
   contact_every_days: number; // nudge if quiet longer than this
+  favorite: boolean;
   created_at: string;
 };
 

@@ -93,6 +93,7 @@ export function personRow(p: NewPerson): Omit<Person, "id" | "created_at"> {
     whatsapp_id: p.whatsapp_id ?? null,
     last_contact_at: p.last_contact_at ?? null,
     contact_every_days: p.contact_every_days ?? 14,
+    favorite: p.favorite ?? false,
   };
 }
 
@@ -135,12 +136,12 @@ export async function seedDemo(today: Date) {
   const ago = (n: number) => subDays(new Date(), n).toISOString();
 
   const [priya, mom, sam, arjun, leah, kenji] = await insertRows("people", [
-    personRow({ name: "Priya", relationship: "best friend", emoji: "🌻", timezone: "Europe/London", last_contact_at: ago(2) }),
-    personRow({ name: "Mom", relationship: "mom", emoji: "💛", timezone: "Asia/Kolkata", last_contact_at: ago(1), contact_every_days: 3 }),
+    personRow({ name: "Priya", relationship: "best friend", emoji: "🌻", timezone: "Europe/London", favorite: true, last_contact_at: ago(2) }),
+    personRow({ name: "Mom", relationship: "mom", emoji: "💛", timezone: "Asia/Kolkata", favorite: true, last_contact_at: ago(1), contact_every_days: 3 }),
     personRow({ name: "Sam", relationship: "brother", emoji: "🚗", timezone: "America/Toronto", last_contact_at: ago(6), contact_every_days: 7 }),
     personRow({ name: "Arjun", relationship: "college friend", emoji: "🎸", timezone: "America/Los_Angeles", last_contact_at: ago(4) }),
     personRow({ name: "Leah", relationship: "coworker", emoji: "🌿", timezone: "Australia/Sydney", last_contact_at: ago(3), contact_every_days: 21 }),
-    personRow({ name: "Kenji", relationship: "old roommate", emoji: "🍜", timezone: "Asia/Tokyo", last_contact_at: ago(34), contact_every_days: 30 }),
+    personRow({ name: "Kenji", relationship: "old roommate", emoji: "🍜", timezone: "Asia/Tokyo", favorite: true, last_contact_at: ago(34), contact_every_days: 30 }),
   ]);
   void kenji;
 

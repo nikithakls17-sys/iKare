@@ -128,7 +128,7 @@ export function ShowUpCard(props: Props) {
             <button
               onClick={() => openLink(smsLink(message, person?.phone))}
               disabled={props.messageLoading}
-              className="flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+              className="flex items-center gap-2 rounded-full bg-strong px-4 py-2.5 text-sm font-bold text-white transition hover:brightness-125"
             >
               <MessageSquareText className="h-4 w-4" /> SMS
             </button>

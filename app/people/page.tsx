@@ -3,6 +3,8 @@
 import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { FavoritesToggle, StarButton, useFavoritesOnly } from "@/components/favorites";
 import { LocalTime, useNow } from "@/components/live";
 import { createPerson, deletePerson, updatePerson } from "@/lib/store";
 import { allTimezones, cityName, guessTimezone, localTimeLabel, offsetLabel, textWindow } from "@/lib/tz";
@@ -22,8 +24,13 @@ type Form = {
 const EMPTY: Form = { name: "", phone: "", relationship: "", emoji: "🙂", timezone: "", contact_every_days: 14 };
 
 export default function PeoplePage() {
-  const { people, moments, loading, refresh } = useData();
+  const { people: everyone, moments, loading, refresh } = useData();
   const [editing, setEditing] = useState<string | "new" | null>(null);
+  const [favOnly, toggleFav] = useFavoritesOnly();
+  const favCount = everyone.filter((p) => p.favorite).length;
+  const people = everyone
+    .filter((p) => !favOnly || p.favorite)
+    .sort((a, b) => Number(b.favorite) - Number(a.favorite) || a.name.localeCompare(b.name));
 
   const stats = (id: string) => ({
     pending: moments.filter((m) => m.person_id === id && m.status === "pending").length,
@@ -59,6 +66,10 @@ export default function PeoplePage() {
             <Plus className="h-4 w-4" /> Add person
           </button>
         )}
+      </div>
+
+      <div className="mt-4">
+        <FavoritesToggle on={favOnly} onToggle={toggleFav} count={favCount} />
       </div>
 
       <WorldClock people={people} />
@@ -109,7 +120,13 @@ export default function PeoplePage() {
               }}
             />
           ) : (
-            <PersonRow key={p.id} person={p} {...stats(p.id)} onEdit={() => setEditing(p.id)} />
+            <PersonRow
+              key={p.id}
+              person={p}
+              {...stats(p.id)}
+              onEdit={() => setEditing(p.id)}
+              onStar={() => updatePerson(p.id, { favorite: !p.favorite }).then(refresh)}
+            />
           ),
         )}
       </div>
@@ -130,7 +147,7 @@ function WorldClock({ people }: { people: Person[] }) {
     <div className="mt-6 -mx-4 overflow-x-auto px-4 pb-1">
       <div className="flex gap-2">
         {zones.map(([tz, ps]) => (
-          <div key={tz} className="min-w-[8.5rem] shrink-0 rounded-2xl bg-ink px-4 py-3 text-white">
+          <div key={tz} className="min-w-[8.5rem] shrink-0 rounded-2xl bg-strong px-4 py-3 text-white">
             <div className="flex items-center gap-1.5 text-xs opacity-70">
               <span className={`h-2 w-2 rounded-full ${dot[textWindow(tz, now)]}`} />
               {cityName(tz)}
@@ -151,43 +168,50 @@ function PersonRow({
   pending,
   showedUp,
   onEdit,
+  onStar,
 }: {
   person: Person;
   pending: number;
   showedUp: number;
   onEdit: () => void;
+  onStar: () => void;
 }) {
   return (
-    <div className="rise flex items-center gap-4 rounded-3xl border border-line bg-paper p-4">
-      <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-peach text-3xl">{person.emoji}</div>
+    <div className="rise flex items-center gap-3 rounded-3xl border border-line bg-paper p-4 transition hover:border-coral/50">
+      <Link href={`/people/${person.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-peach text-2xl">{person.emoji}</div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-lg font-bold">
           {person.name}
           {person.whatsapp_id && <span className="ml-1.5 text-xs font-semibold text-emerald-600">● WhatsApp</span>}
         </p>
         <p className="text-sm text-muted">
-          {person.relationship ?? "—"}
+          {person.relationship ?? "Contact"}
           {person.last_contact_at && ` · talked ${formatDistanceToNowStrict(parseISO(person.last_contact_at))} ago`}
           {pending > 0 && ` · ${pending} coming up`}
         </p>
         {person.timezone && (
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <LocalTime tz={person.timezone} compact />
-            <span className="text-xs text-muted">{offsetLabel(person.timezone)}</span>
+            <span className="hidden text-xs text-muted sm:inline">{offsetLabel(person.timezone)}</span>
           </div>
         )}
       </div>
-      <div className="text-right">
-        <p className="font-display text-2xl font-bold text-coral">{showedUp}</p>
-        <p className="text-xs font-semibold text-muted">showed up</p>
+      <div className="shrink-0 text-right">
+        <p className="font-display text-2xl font-bold leading-none text-coral">{showedUp}</p>
+        <p className="mt-1 text-xs font-semibold text-muted">showed up</p>
       </div>
-      <button
-        onClick={onEdit}
-        aria-label={`Edit ${person.name}`}
-        className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-peach hover:text-ink"
-      >
-        <Pencil className="h-4 w-4" />
-      </button>
+      </Link>
+      <div className="flex shrink-0 flex-col">
+        <StarButton on={person.favorite} onClick={onStar} name={person.name} />
+        <button
+          onClick={onEdit}
+          aria-label={`Edit ${person.name}`}
+          className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-peach hover:text-ink"
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }

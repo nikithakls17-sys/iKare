@@ -12,11 +12,22 @@ export const metadata: Metadata = {
   description: "Never miss the moments that matter to the people you love.",
 };
 
-export const viewport: Viewport = { themeColor: "#fff8f0" };
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fff8f0" },
+    { media: "(prefers-color-scheme: dark)", color: "#15110d" },
+  ],
+};
+
+// Apply the saved theme before first paint to avoid a flash.
+const themeScript = `try{var t=localStorage.getItem("icare.theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable} h-full antialiased`}>
+    <html lang="en" className={`${display.variable} ${body.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-full font-sans">
         <TodayProvider>
           <Header />

@@ -11,6 +11,7 @@ create table if not exists people (
   whatsapp_id text,           -- e.g. 447911123456@c.us
   last_contact_at timestamptz,
   contact_every_days int default 14,
+  favorite boolean default false,
   created_at timestamptz default now()
 );
 

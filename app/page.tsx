@@ -4,6 +4,7 @@ import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 import { CalendarDays, Moon, Plus, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { FavoritesToggle, useFavoritesOnly } from "@/components/favorites";
 import { useWhatsApp } from "@/components/live";
 import { momentChip, momentHeadline, ShowUpCard, type SendResult } from "@/components/moment-card";
 import { useToday } from "@/components/today-provider";
@@ -16,7 +17,14 @@ const HIDDEN_NUDGES_KEY = "icare.hiddenNudges";
 
 export default function TodayPage() {
   const { today, todayStr, overridden } = useToday();
-  const { people, moments, outbox, loading, error, refresh, setMoments } = useData();
+  const data = useData();
+  const { loading, error, refresh, setMoments } = data;
+  const [favOnly, toggleFav] = useFavoritesOnly();
+  const favIds = new Set(data.people.filter((p) => p.favorite).map((p) => p.id));
+  const keep = (personId: string) => !favOnly || favIds.has(personId);
+  const people = data.people.filter((p) => keep(p.id));
+  const moments = data.moments.filter((m) => keep(m.person_id));
+  const outbox = data.outbox.filter((o) => keep(o.person_id));
   const wa = useWhatsApp();
   const waLive = wa?.status === "ready";
   const [toast, setToast] = useState<string | null>(null);
@@ -31,7 +39,7 @@ export default function TodayPage() {
     } catch {}
   }, []);
 
-  const personById = new Map(people.map((p) => [p.id, p]));
+  const personById = new Map(data.people.map((p) => [p.id, p]));
   const pending = moments.filter((m) => m.status === "pending");
   const due = pending.filter((m) => m.followup_date <= todayStr);
   const weekOut = format(addDays(today, 7), "yyyy-MM-dd");
@@ -125,7 +133,10 @@ export default function TodayPage() {
           {format(today, "EEEE, MMMM d")}
           {overridden && " · time travel"}
         </p>
-        <h1 className="font-display mt-1 text-4xl font-bold tracking-tight">Today</h1>
+        <div className="mt-1 flex items-center justify-between gap-3">
+          <h1 className="font-display text-4xl font-bold tracking-tight">Today</h1>
+          <FavoritesToggle on={favOnly} onToggle={toggleFav} count={favIds.size} />
+        </div>
         {!loading && (
           <p className="mt-1 text-muted">
             {peopleToday.size === 0
@@ -194,7 +205,15 @@ export default function TodayPage() {
           })}
         </div>
       ) : (
-        <EmptyState hasAny={moments.length > 0 || people.length > 0} onSeed={refresh} />
+        favOnly && data.people.length > 0 ? (
+        <p className="rounded-3xl border border-dashed border-line bg-paper p-8 text-center text-muted">
+          {favIds.size === 0
+            ? "No favorites yet. Tap the ☆ next to someone on the People page."
+            : "Nothing for your favorites today."}
+        </p>
+      ) : (
+        <EmptyState hasAny={data.moments.length > 0 || data.people.length > 0} onSeed={refresh} />
+      )
       )}
 
       {!loading && scheduled.length > 0 && (
@@ -260,7 +279,7 @@ export default function TodayPage() {
       )}
 
       {toast && (
-        <div className="rise fixed inset-x-4 bottom-20 z-30 mx-auto w-fit max-w-md rounded-2xl bg-ink px-5 py-3 text-center text-sm font-semibold text-white shadow-lg sm:bottom-8">
+        <div className="rise fixed inset-x-4 bottom-20 z-30 mx-auto w-fit max-w-md rounded-2xl bg-strong px-5 py-3 text-center text-sm font-semibold text-white shadow-lg sm:bottom-8">
           {toast}
         </div>
       )}
