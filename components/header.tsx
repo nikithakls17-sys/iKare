@@ -1,11 +1,13 @@
 "use client";
 
 import { addDays, format } from "date-fns";
-import { Bell, Heart, Home, Info, Monitor, Moon, Plus, Sun, Users } from "lucide-react";
+import { Bell, Home, Info, Monitor, Moon, Plus, Sun, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { seedDemo } from "@/lib/store";
+import { AnimatedBackground } from "./core/animated-background";
+import { Mark } from "./geo";
 import { useWhatsApp } from "./live";
 import { useToday } from "./today-provider";
 
@@ -17,43 +19,49 @@ const NAV = [
 
 export function Header() {
   const pathname = usePathname();
+  const activeHref = NAV.find(({ href }) => isActive(pathname, href))?.href;
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-line bg-cream/90 backdrop-blur">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-2xl bg-coral text-white shadow-sm">
-              <Heart className="h-5 w-5" fill="currentColor" />
-            </span>
-            <span className="font-display text-2xl font-bold tracking-tight">iKare</span>
+      <header className="sticky top-0 z-20 border-b border-line bg-cream/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-2 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-8 lg:px-6">
+          <Link href="/" className="flex shrink-0 items-center gap-2 justify-self-start">
+            <Mark />
+            <span className="font-display text-2xl font-semibold tracking-tight">iKare</span>
           </Link>
-          <div className="flex items-center gap-1 sm:gap-2">
-          <WhatsAppPill />
-          <nav className="hidden gap-1 lg:flex">
-            {NAV.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  isActive(pathname, href) ? "bg-strong text-white" : "text-muted hover:bg-peach hover:text-ink"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </Link>
-            ))}
+          <nav className="hidden items-center gap-1 lg:flex">
+            <AnimatedBackground
+              defaultValue={activeHref}
+              className="bg-strong"
+              transition={{ type: "spring", bounce: 0.2, duration: 0.3 }}
+              enableHover
+            >
+              {NAV.map(({ href, label, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  data-id={href}
+                  className="inline-flex h-12 items-center gap-2 px-4 text-sm font-bold text-ink transition-colors duration-300 hover:text-white data-[checked=true]:text-white"
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </Link>
+              ))}
+            </AnimatedBackground>
           </nav>
+          <div className="flex items-center gap-1 justify-self-end sm:gap-2">
+          <WhatsAppPill />
+          <span className="mx-2 hidden h-6 w-px bg-line sm:block" aria-hidden="true" />
           <Link
             href="/about"
             aria-label="About iKare"
-            className={`grid h-9 w-9 place-items-center rounded-full transition hover:bg-peach ${pathname === "/about" ? "text-coral" : "text-muted"}`}
+            className={`grid h-12 w-12 place-items-center rounded-full transition hover:bg-tint ${pathname === "/about" ? "text-accent" : "text-muted"}`}
           >
             <Info className="h-5 w-5" />
           </Link>
           <Link
             href="/settings"
             aria-label="Notifications and settings"
-            className={`grid h-9 w-9 place-items-center rounded-full transition hover:bg-peach ${pathname === "/settings" ? "text-coral" : "text-muted"}`}
+            className={`grid h-12 w-12 place-items-center rounded-full transition hover:bg-tint ${pathname === "/settings" ? "text-accent" : "text-muted"}`}
           >
             <Bell className="h-5 w-5" />
           </Link>
@@ -64,19 +72,24 @@ export function Header() {
       </header>
 
       {/* mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-line bg-paper/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
-        {NAV.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-semibold ${
-              isActive(pathname, href) ? "text-coral" : "text-muted"
-            }`}
-          >
-            <Icon className="h-5 w-5" />
-            {label}
-          </Link>
-        ))}
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex gap-1 border-t border-line bg-cream/85 px-2 pt-2 pb-[calc(0.375rem+env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
+        <AnimatedBackground
+          defaultValue={activeHref}
+          className="bg-strong"
+          transition={{ type: "spring", bounce: 0.2, duration: 0.3 }}
+        >
+          {NAV.map(({ href, label, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              data-id={href}
+              className="flex flex-1 flex-col items-center justify-center min-h-14 gap-1 py-2 text-xs font-bold text-ink transition-colors duration-300 data-[checked=true]:text-white"
+            >
+              <Icon className="h-5 w-5" />
+              {label}
+            </Link>
+          ))}
+        </AnimatedBackground>
       </nav>
     </>
   );
@@ -113,7 +126,7 @@ function ThemeToggle() {
       onClick={cycle}
       aria-label={`Theme: ${theme}. Click to change.`}
       title={`Theme: ${theme}`}
-      className="grid h-9 w-9 place-items-center rounded-full text-muted transition hover:bg-peach hover:text-ink"
+      className="grid h-12 w-12 place-items-center rounded-full text-muted transition hover:bg-tint hover:text-ink"
     >
       <Icon className="h-5 w-5" />
     </button>
@@ -127,12 +140,13 @@ function WhatsAppPill() {
   return (
     <Link
       href="/connect"
-      className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold ${
-        ready ? "bg-emerald-50 text-emerald-800" : "bg-peach text-coral-dark"
+      aria-label={ready ? "WhatsApp live" : "Link WhatsApp"}
+      className={`flex h-12 min-w-12 items-center justify-center gap-2 whitespace-nowrap text-xs font-bold sm:px-4 ${
+        ready ? "bg-moss text-ink" : "bg-tint text-accent-deep"
       }`}
     >
-      <span className={`h-2 w-2 rounded-full ${ready ? "animate-pulse bg-emerald-500" : "bg-coral"}`} />
-      {ready ? "WhatsApp live" : "Link WhatsApp"}
+      <span className={`h-2 w-2 rounded-full ${ready ? "animate-pulse bg-accent" : "bg-accent"}`} />
+      <span className="hidden sm:inline">{ready ? "WhatsApp live" : "Link WhatsApp"}</span>
     </Link>
   );
 }
@@ -153,15 +167,15 @@ function DemoBar() {
           type="date"
           value={todayStr}
           onChange={(e) => setOverride(e.target.value || null)}
-          className="rounded-md bg-white/10 px-2 py-1 text-white [color-scheme:dark]"
+          className="bg-white/10 px-2 py-1 text-white [color-scheme:dark]"
         />
-        <button onClick={() => jump(1)} className="rounded-md bg-white/10 px-2 py-1 hover:bg-white/20">
+        <button onClick={() => jump(1)} className="bg-white/10 px-2 py-1 hover:bg-white/20">
           +1 day
         </button>
         {overridden && (
           <button
             onClick={() => setOverride(null)}
-            className="rounded-md bg-white/10 px-2 py-1 hover:bg-white/20"
+            className="bg-white/10 px-2 py-1 hover:bg-white/20"
           >
             Back to real today
           </button>
@@ -179,7 +193,7 @@ function DemoBar() {
               setSeeding(false);
             }
           }}
-          className="ml-auto rounded-md bg-coral px-2 py-1 font-semibold hover:bg-coral-dark disabled:opacity-60"
+          className="ml-auto bg-accent px-2 py-1 font-semibold text-on-accent hover:bg-accent-deep disabled:opacity-60"
         >
           {seeding ? "Loading…" : "Reset demo data"}
         </button>
