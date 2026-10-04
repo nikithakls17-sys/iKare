@@ -13,7 +13,9 @@ export function useData() {
 
   const refresh = useCallback(async () => {
     try {
-      setData(await loadAll());
+      const next = await loadAll();
+      // Polling returns fresh objects every time; keep the old ones unless something changed.
+      setData((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't load your data.");
