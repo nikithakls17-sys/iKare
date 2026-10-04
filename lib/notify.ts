@@ -92,7 +92,7 @@ export async function showNotification(title: string, body: string, url = "/", t
   const options: NotificationOptions = {
     body,
     icon: "/icons/icon-any-192.png",
-    badge: "/icons/icon-any-192.png",
+    badge: "/icons/badge-96.png",
     tag,
     data: { url },
   };

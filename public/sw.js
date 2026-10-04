@@ -1,7 +1,7 @@
 // iKare service worker: makes the app installable, keeps a tiny offline fallback,
 // and opens the right page when a notification is tapped.
 
-const CACHE = "icare-v1";
+const CACHE = "icare-v2";
 const OFFLINE_URLS = ["/", "/icons/icon-any-192.png"];
 
 self.addEventListener("install", (event) => {
@@ -48,7 +48,7 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(data.title || "iKare", {
       body: data.body || "",
       icon: "/icons/icon-any-192.png",
-      badge: "/icons/icon-any-192.png",
+      badge: "/icons/badge-96.png",
       data: { url: data.url || "/" },
       tag: data.tag,
     }),
