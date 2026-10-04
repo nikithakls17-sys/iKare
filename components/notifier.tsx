@@ -179,7 +179,7 @@ function buildAlerts(
 
 function emojiFor(m: Moment) {
   return (
-    { interview: "💼", exam: "📚", health: "🩺", travel: "✈️", celebration: "🎉", tough_time: "🫂", other: "✨" }[
+    { interview: "💼", exam: "📚", health: "🩺", travel: "✈️", celebration: "🎉", tough_time: "🫂", other: "✨", reply: "💬" }[
       m.category
     ] ?? "✨"
   );

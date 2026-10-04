@@ -225,7 +225,7 @@ export default function PersonPage() {
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           <button
             onClick={() => send("now")}
-            disabled={busy !== null || !message.trim()}
+            disabled={busy !== null || !message.trim() || /\[[^\]]+\]/.test(message)}
             className="flex items-center justify-center gap-2 rounded-2xl bg-coral px-4 py-3 font-bold text-white shadow-sm transition hover:bg-coral-dark disabled:opacity-50"
           >
             {busy === "now" ? (
@@ -239,7 +239,7 @@ export default function PersonPage() {
           </button>
           <button
             onClick={() => send("morning")}
-            disabled={busy !== null || !message.trim()}
+            disabled={busy !== null || !message.trim() || /\[[^\]]+\]/.test(message)}
             className="flex flex-col items-center justify-center rounded-2xl border-2 border-coral/40 px-4 py-2 font-bold text-coral transition hover:bg-peach disabled:opacity-50"
           >
             <span className="flex items-center gap-2">

@@ -6,6 +6,7 @@ export const CATEGORIES = [
   "celebration",
   "tough_time",
   "other",
+  "reply",
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
@@ -80,4 +81,5 @@ export const CATEGORY_META: Record<Category, { label: string; emoji: string; tin
   celebration: { label: "Celebration", emoji: "🎉", tint: "bg-amber-100 text-amber-800" },
   tough_time: { label: "Tough time", emoji: "🫂", tint: "bg-orange-100 text-orange-800" },
   other: { label: "Moment", emoji: "✨", tint: "bg-stone-100 text-stone-700" },
+  reply: { label: "Reply owed", emoji: "💬", tint: "bg-fuchsia-100 text-fuchsia-800" },
 };

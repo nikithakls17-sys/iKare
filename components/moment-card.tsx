@@ -45,6 +45,8 @@ export function ShowUpCard(props: Props) {
   const tz = person?.timezone ?? null;
   const asleep = tz ? textWindow(tz, now) !== "good" : false;
   const reachable = waLive && Boolean(person?.whatsapp_id || person?.phone);
+  // Reply drafts leave [blanks] for things only the user knows.
+  const hasBlank = /\[[^\]]+\]/.test(message);
 
   const approve = async (when: "auto" | "now") => {
     setBusy(true);
@@ -93,6 +95,11 @@ export function ShowUpCard(props: Props) {
         {props.messageLoading && <Loader2 className="absolute right-8 top-4 h-4 w-4 animate-spin text-muted" />}
       </div>
 
+      {hasBlank && (
+        <p className="mx-5 mt-2 rounded-xl bg-fuchsia-50 px-3 py-2 text-sm text-fuchsia-900">
+          ✏️ Fill in the <b>[blank]</b> with your own words before sending.
+        </p>
+      )}
       {error && <p className="mx-5 mt-2 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800">{error}</p>}
 
       <div className="flex flex-wrap items-center gap-2 p-5 pt-3">
@@ -100,7 +107,7 @@ export function ShowUpCard(props: Props) {
           <>
             <button
               onClick={() => approve("auto")}
-              disabled={busy || props.messageLoading || !message.trim()}
+              disabled={busy || props.messageLoading || !message.trim() || hasBlank}
               className="flex items-center gap-2 rounded-full bg-coral px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-coral-dark disabled:opacity-60"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -120,14 +127,14 @@ export function ShowUpCard(props: Props) {
           <>
             <button
               onClick={() => openLink(whatsappLink(message, person?.phone))}
-              disabled={props.messageLoading}
+              disabled={props.messageLoading || hasBlank}
               className="flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:brightness-95"
             >
               <MessageCircle className="h-4 w-4" /> Send on WhatsApp
             </button>
             <button
               onClick={() => openLink(smsLink(message, person?.phone))}
-              disabled={props.messageLoading}
+              disabled={props.messageLoading || hasBlank}
               className="flex items-center gap-2 rounded-full bg-strong px-4 py-2.5 text-sm font-bold text-white transition hover:brightness-125"
             >
               <MessageSquareText className="h-4 w-4" /> SMS
@@ -160,6 +167,8 @@ export function momentHeadline(moment: Moment, name: string) {
     case "health":
     case "tough_time":
       return `Check in on ${name}`;
+    case "reply":
+      return `Reply to ${name}`;
     case "celebration":
       return `Celebrate with ${name}`;
     default:

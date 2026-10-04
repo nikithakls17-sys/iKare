@@ -15,7 +15,7 @@ const EXTRACT_PROMPT = `You help someone stay present for the friends and family
 You will be given a chat (screenshot, exported chat text, or live messages) and/or a short note written by the user. Find the moments where the OTHER person shared something happening in their life that deserves a follow-up: job interviews, exams, doctor appointments, feeling sick, trips, celebrations, big news, or tough times.
 
 Rules:
-- Ignore small talk, logistics ("see you at 7"), and anything about the user themselves. In a chat screenshot, the user's own messages are usually on the right; the other person's are on the left. In text transcripts the user's lines start with "Me:".
+- Ignore small talk, logistics ("see you at 7"), and news about the user themselves. In a chat screenshot, the user's own messages are usually on the right; the other person's are on the left. In text transcripts the user's lines start with "Me:".
 - If someone mentions a third person ("my mom has surgery Friday"), the follow-up is still with the person who told you, so use the sender's name.
 - In a note, the user names the person directly ("Sam has his driving test on Friday" is about Sam).
 - Transcript lines may start with a [timestamp]: resolve relative dates against when that message was sent, then make sure followupDate is not in the past (if the event already happened and was never followed up, use today).
@@ -24,6 +24,7 @@ Rules:
 - suggestedMessage: a short, warm, casual text (1-2 sentences, at most one emoji) the way a caring friend would actually text. Reference the specific thing. Match the language the person writes in. Never robotic or formal.
 - title: 2-4 words, e.g. "Job interview", "Driving test", "Doctor visit". detail: one sentence of context.
 - Match personName to one of the known people when it is clearly the same person, using their exact spelling. If no name is visible, use a sensible label like "Friend".
+- REPLY OWED: if the other person asked the user a real question ("how are you?", "how did your hackathon go?", "are you free Sunday?", "did you get the job?") and the user has NOT answered it later in the chat, add a moment with category "reply". title: what they asked, short (e.g. "Asked about your hackathon"). detail: their question, quoted. eventDate: null. followupDate: today (the user's today). suggestedMessage: a warm reply STARTER the user will finish. Never invent facts about the user, including how things went, how they feel, whether they are free, their plans, or yes/no answers. Put anything only the user knows in square brackets (e.g. "[yes / no]", "[free or busy]"), e.g. "Thanks for asking! It went [how it went] 😊 How's your week been?". For invitations or plans, never accept or decline for the user, e.g. "Ooh Sunday lunch! I'm [free / busy] then. What were you thinking?". Always ask them something back. Skip rhetorical or already-answered questions, and skip questions in the screenshot/chat that the user clearly replied to.
 - Only include moments that were not already handled. Return an empty moments array if nothing qualifies.`;
 
 const nullableString = { type: ["string", "null"] };

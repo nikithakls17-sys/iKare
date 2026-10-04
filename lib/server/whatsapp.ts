@@ -184,6 +184,7 @@ async function handleMessage(msg: Message) {
   const chatId = await ingest(msg);
   if (!chatId) return;
   if (!msg.fromMe) note(`Message in ${state.buffers.get(chatId)?.title ?? "a chat"}`);
+  else await resolveReplies([...(state.buffers.get(chatId)?.people.values() ?? [])]);
 
   // Only analyse after the other person has spoken and the chat goes quiet for a moment.
   const buf = state.buffers.get(chatId)!;
@@ -350,7 +351,18 @@ export async function sendNow(person: Person, text: string) {
   if (!chatId) throw new Error(`${person.name} isn't reachable on WhatsApp`);
   await state.client!.sendMessage(chatId, text);
   await db.update("people", person.id, { last_contact_at: new Date().toISOString() });
+  await resolveReplies([person.id]);
   note(`Sent to ${person.name}`);
+}
+
+/** The user answered: clear any "reply owed" cards for these people. */
+async function resolveReplies(personIds: string[]) {
+  if (personIds.length === 0) return;
+  const open = (await db.list("moments")).filter(
+    (m) => m.category === "reply" && m.status === "pending" && personIds.includes(m.person_id),
+  );
+  for (const m of open) await db.update("moments", m.id, { status: "done", completed_at: new Date().toISOString() });
+  if (open.length) note(`Marked ${open.length} reply as answered`);
 }
 
 async function runScheduler() {
