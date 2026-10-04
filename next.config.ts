@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Loaded at runtime in Node, not bundled (uses puppeteer + native modules).
   serverExternalPackages: ["whatsapp-web.js", "puppeteer", "puppeteer-core"],
+  // Keep the WhatsApp session and local data out of build traces; they're private.
+  outputFileTracingExcludes: {
+    "/*": ["./.wwebjs_auth/**/*", "./.wwebjs_cache/**/*", "./.data/**/*"],
+  },
   async headers() {
     return [
       {
