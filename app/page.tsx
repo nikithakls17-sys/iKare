@@ -1,9 +1,11 @@
 "use client";
 
 import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
-import { CalendarDays, Moon, Plus, Sparkles, X } from "lucide-react";
+import { Plus, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { AnimatedBackground } from "@/components/core/animated-background";
+import { EmptyArt, GeoRule, PageBanner } from "@/components/geo";
 import { FavoritesToggle, useFavoritesOnly } from "@/components/favorites";
 import { useWhatsApp } from "@/components/live";
 import { NotifyBanner } from "@/components/notify-banner";
@@ -129,107 +131,135 @@ export default function TodayPage() {
 
   return (
     <div>
-      <section className="mb-6">
-        <p className="text-sm font-semibold uppercase tracking-wider text-coral">
-          {format(today, "EEEE, MMMM d")}
-          {overridden && " · time travel"}
-        </p>
-        <div className="mt-1 flex items-center justify-between gap-3">
-          <h1 className="font-display text-4xl font-bold tracking-tight">Today</h1>
-          <FavoritesToggle on={favOnly} onToggle={toggleFav} count={favIds.size} />
-        </div>
-        {!loading && (
-          <p className="mt-1 text-muted">
-            {peopleToday.size === 0
-              ? "You're all caught up."
-              : `${peopleToday.size} ${peopleToday.size === 1 ? "person" : "people"} to show up for today.`}
-          </p>
-        )}
-      </section>
+      <PageBanner
+        eyebrow={`${format(today, "EEEE · MMMM d")}${overridden ? " · time travel" : ""}`}
+        title="Today"
+      >
+        {loading
+          ? " "
+          : peopleToday.size === 0
+            ? "You're all caught up."
+            : `${peopleToday.size} ${peopleToday.size === 1 ? "person" : "people"} to show up for.`}
+      </PageBanner>
+
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <h2 className="eyebrow flex items-center gap-2 text-muted">
+          <GeoRule /> Show up today
+        </h2>
+        <FavoritesToggle on={favOnly} onToggle={toggleFav} count={favIds.size} />
+      </div>
 
       <NotifyBanner />
 
-      {error && <p className="mb-4 rounded-2xl bg-rose-50 p-4 text-sm text-rose-800">{error}</p>}
+      {error && <p className="mb-4 bg-ochre-tint p-4 text-sm text-warn">{error}</p>}
 
       {loading ? (
         <div className="space-y-4">
           {[0, 1].map((i) => (
-            <div key={i} className="h-48 animate-pulse rounded-3xl bg-paper" />
+            <div key={i} className="h-48 animate-pulse bg-paper" />
           ))}
         </div>
-      ) : due.length + drifting.length > 0 ? (
-        <div className="space-y-4">
-          {due.map((m) => {
-            const person = personById.get(m.person_id);
-            return (
-              <ShowUpCard
-                key={m.id}
-                person={person}
-                headline={momentHeadline(m, person?.name ?? "them")}
-                chip={momentChip(m)}
-                detail={m.detail}
-                message={m.suggested_message}
-                waLive={waLive}
-                onApprove={(text, when) => send(person, text, when, m.id)}
-                onFallbackSent={(text) => {
-                  markDone(m, { suggested_message: text });
-                  if (person) updatePerson(person.id, { last_contact_at: new Date().toISOString() });
-                }}
-                onDone={() => markDone(m)}
-                onSnooze={() => {
-                  patch(m, { followup_date: format(addDays(today, 1), "yyyy-MM-dd") });
-                  flash("Snoozed until tomorrow");
-                }}
-                onDismiss={() => patch(m, { status: "dismissed" })}
-              />
-            );
-          })}
-
-          {drifting.map((p) => {
-            const quiet = daysQuiet(p) ?? 0;
-            return (
-              <ShowUpCard
-                key={`drift-${p.id}`}
-                person={p}
-                headline={`It's been ${quiet} days since you talked to ${p.name}`}
-                chip={{ emoji: "🌱", label: "Reconnect", tint: "bg-sage text-emerald-900" }}
-                detail={p.relationship ? `Your ${p.relationship}${p.timezone ? ` in ${cityName(p.timezone)}` : ""}.` : null}
-                message={drafts[p.id] ?? ""}
-                messageLoading={!drafts[p.id]}
-                waLive={waLive}
-                onApprove={(text, when) => send(p, text, when)}
-                onFallbackSent={() => {
-                  updatePerson(p.id, { last_contact_at: new Date().toISOString() }).then(refresh);
-                  flash(`You reached out to ${p.name} 💛`);
-                }}
-                onDismiss={() => hideNudge(p)}
-              />
-            );
-          })}
+      ) : due.length > 0 ? (
+        <div className="-mx-1 space-y-2">
+          <AnimatedBackground
+            className="bg-brand-ochre/70"
+            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+            enableHover
+          >
+            {due.map((m) => {
+              const person = personById.get(m.person_id);
+              return (
+                <div key={m.id} data-id={m.id} className="block p-1">
+                  <ShowUpCard
+                    person={person}
+                    headline={momentHeadline(m, person?.name ?? "them")}
+                    chip={momentChip(m)}
+                    detail={m.detail}
+                    message={m.suggested_message}
+                    waLive={waLive}
+                    onApprove={(text, when) => send(person, text, when, m.id)}
+                    onFallbackSent={(text) => {
+                      markDone(m, { suggested_message: text });
+                      if (person) updatePerson(person.id, { last_contact_at: new Date().toISOString() });
+                    }}
+                    onDone={() => markDone(m)}
+                    onSnooze={() => {
+                      patch(m, { followup_date: format(addDays(today, 1), "yyyy-MM-dd") });
+                      flash("Snoozed until tomorrow");
+                    }}
+                    onDismiss={() => patch(m, { status: "dismissed" })}
+                  />
+                </div>
+              );
+            })}
+          </AnimatedBackground>
         </div>
-      ) : (
-        favOnly && data.people.length > 0 ? (
-        <p className="rounded-3xl border border-dashed border-line bg-paper p-8 text-center text-muted">
+      ) : drifting.length > 0 ? (
+        <p className="geo-box border border-line bg-paper p-6 text-center text-muted">
+          Nothing due today. Maybe say hi to someone below?
+        </p>
+      ) : favOnly && data.people.length > 0 ? (
+        <p className="border border-dashed border-line bg-paper p-8 text-center text-muted">
           {favIds.size === 0
             ? "No favorites yet. Tap the ☆ next to someone on the People page."
             : "Nothing for your favorites today."}
         </p>
       ) : (
         <EmptyState hasAny={data.moments.length > 0 || data.people.length > 0} onSeed={refresh} />
-      )
+      )}
+
+      {!loading && drifting.length > 0 && (
+        <section className="mt-12">
+          <h2 className="eyebrow mb-2 flex items-center gap-2 text-muted">
+            <GeoRule /> Reconnect
+          </h2>
+          <p className="mb-4 font-display text-2xl font-semibold">
+            People you haven&apos;t talked to <em className="font-medium">lately</em>
+          </p>
+          <div className="-mx-1 space-y-2">
+            <AnimatedBackground
+              className="bg-brand-moss/70"
+              transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              enableHover
+            >
+              {drifting.map((p) => {
+                const quiet = daysQuiet(p) ?? 0;
+                return (
+                  <div key={p.id} data-id={p.id} className="block p-1">
+                    <ShowUpCard
+                      person={p}
+                      headline={`Say hi to ${p.name}`}
+                      chip={{ emoji: "🌱", label: `${quiet} days since you talked`, tint: "bg-moss text-ink" }}
+                      detail={p.relationship ? `Your ${p.relationship}${p.timezone ? ` in ${cityName(p.timezone)}` : ""}.` : null}
+                      message={drafts[p.id] ?? ""}
+                      messageLoading={!drafts[p.id]}
+                      waLive={waLive}
+                      onApprove={(text, when) => send(p, text, when)}
+                      onFallbackSent={() => {
+                        updatePerson(p.id, { last_contact_at: new Date().toISOString() }).then(refresh);
+                        flash(`You reached out to ${p.name} 💛`);
+                      }}
+                      onDismiss={() => hideNudge(p)}
+                    />
+                  </div>
+                );
+              })}
+            </AnimatedBackground>
+          </div>
+        </section>
       )}
 
       {!loading && scheduled.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-muted">
-            <Moon className="h-4 w-4" /> Waiting for their morning
+          <h2 className="eyebrow mb-4 flex items-center gap-2 text-muted">
+            <GeoRule /> Waiting for their morning
           </h2>
-          <ul className="divide-y divide-line overflow-hidden rounded-3xl border border-line bg-paper">
+          <ul className="geo-box divide-y divide-line border border-line bg-paper">
             {scheduled.map((o) => {
               const p = personById.get(o.person_id);
               const at = new Date(o.send_at);
               return (
-                <li key={o.id} className="flex items-center gap-3 px-5 py-3.5">
+                <li key={o.id} className="flex items-center gap-4 px-6 py-4">
                   <span className="text-xl">{p?.emoji ?? "🙂"}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">To {p?.name ?? "someone"}: “{o.text}”</p>
@@ -241,7 +271,7 @@ export default function TodayPage() {
                   <button
                     onClick={() => updateOutbox(o.id, { status: "cancelled" }).then(refresh)}
                     aria-label="Cancel scheduled message"
-                    className="grid h-9 w-9 place-items-center rounded-full text-muted hover:bg-peach"
+                    className="grid h-12 w-12 place-items-center rounded-full text-muted hover:bg-tint"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -254,15 +284,15 @@ export default function TodayPage() {
 
       {!loading && upcoming.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-muted">
-            <CalendarDays className="h-4 w-4" /> Coming up
+          <h2 className="eyebrow mb-4 flex items-center gap-2 text-muted">
+            <GeoRule /> Coming up
           </h2>
-          <ul className="divide-y divide-line overflow-hidden rounded-3xl border border-line bg-paper">
+          <ul className="geo-box divide-y divide-line border border-line bg-paper">
             {upcoming.map((m) => {
               const p = personById.get(m.person_id);
               const days = differenceInCalendarDays(parseISO(m.followup_date), today);
               return (
-                <li key={m.id} className="flex items-center gap-3 px-5 py-3.5">
+                <li key={m.id} className="flex items-center gap-4 px-6 py-4">
                   <span className="text-xl">{p?.emoji ?? "🙂"}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">
@@ -282,7 +312,7 @@ export default function TodayPage() {
       )}
 
       {toast && (
-        <div className="rise fixed inset-x-4 bottom-20 z-30 mx-auto w-fit max-w-md rounded-2xl bg-strong px-5 py-3 text-center text-sm font-semibold text-white shadow-lg sm:bottom-8">
+        <div className="rise fixed inset-x-4 bottom-20 z-30 mx-auto w-fit max-w-md bg-strong px-6 py-4 text-center text-sm font-semibold text-white sm:bottom-8">
           {toast}
         </div>
       )}
@@ -293,20 +323,20 @@ export default function TodayPage() {
 function EmptyState({ hasAny, onSeed }: { hasAny: boolean; onSeed: () => void }) {
   const [seeding, setSeeding] = useState(false);
   return (
-    <div className="rise rounded-3xl border border-dashed border-line bg-paper px-6 py-12 text-center">
-      <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-sage text-3xl">🌱</div>
-      <h2 className="font-display text-2xl font-bold">
-        {hasAny ? "Nothing due today" : "Who's got something coming up?"}
+    <div className="rise geo-box border border-line bg-paper px-6 py-12 text-center">
+      <EmptyArt className="mx-auto mb-6" />
+      <h2 className="font-display text-3xl font-semibold [&_em]:font-medium">
+        {hasAny ? <>Nothing due <em>today</em></> : <>Who&apos;s got something <em>coming up?</em></>}
       </h2>
       <p className="mx-auto mt-2 max-w-sm text-muted">
         {hasAny
           ? "Enjoy the quiet. When a friend shares something big, iKare will remind you to ask."
           : "Link WhatsApp, drop in a chat screenshot, or write a quick note. iKare finds the moments worth following up on."}
       </p>
-      <div className="mt-6 flex flex-wrap justify-center gap-3">
+      <div className="mt-6 flex flex-wrap justify-center gap-4">
         <Link
           href="/add"
-          className="flex items-center gap-2 rounded-full bg-coral px-5 py-3 font-bold text-white shadow-sm transition hover:bg-coral-dark"
+          className="flex items-center gap-2 bg-accent px-6 py-4 font-bold text-on-accent transition hover:bg-accent-deep"
         >
           <Plus className="h-4 w-4" /> Add a moment
         </Link>
@@ -318,7 +348,7 @@ function EmptyState({ hasAny, onSeed }: { hasAny: boolean; onSeed: () => void })
               await seedDemo(new Date());
               onSeed();
             }}
-            className="flex items-center gap-2 rounded-full border border-line px-5 py-3 font-bold transition hover:bg-peach disabled:opacity-60"
+            className="flex items-center gap-2 border border-line px-6 py-4 font-bold transition hover:bg-tint disabled:opacity-60"
           >
             <Sparkles className="h-4 w-4" /> {seeding ? "Loading…" : "Try with sample data"}
           </button>

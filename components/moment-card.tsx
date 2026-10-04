@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { smsLink, whatsappLink } from "@/lib/links";
 import { localTimeLabel, nextGoodTime, textWindow } from "@/lib/tz";
 import { CATEGORY_META, type Moment, type Person } from "@/lib/types";
+import { CardMotif } from "./geo";
 import { LocalTime, useNow } from "./live";
 
 export type SendResult =
@@ -66,49 +67,53 @@ export function ShowUpCard(props: Props) {
   };
 
   return (
-    <article className="rise overflow-hidden rounded-3xl border border-line bg-paper shadow-[0_2px_0_rgba(43,33,24,0.04)]">
-      <div className="flex items-start gap-3 p-5 pb-3">
-        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-peach text-2xl">
+    // Same anatomy as a People row (avatar · name and meta · motif on the right), on the inverse surface.
+    <article className="rise inverse geo-box w-full border border-line bg-paper">
+      <div className="flex items-center gap-4 p-4 sm:p-6 sm:pb-4">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-tint text-xl ring-1 ring-line sm:h-12 sm:w-12 sm:text-2xl">
           {person?.emoji ?? "🙂"}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-lg font-bold leading-snug">{headline}</p>
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm text-muted">
-            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${chip.tint}`}>
-              {chip.emoji} {chip.label}
-            </span>
-            <LocalTime tz={tz} />
-          </div>
-          {detail && <p className="mt-2 text-sm text-muted">{detail}</p>}
+          <p className="eyebrow truncate text-ochre">
+            {chip.emoji} {chip.label}
+          </p>
+          <p className="mt-1 text-lg font-bold leading-snug">{headline}</p>
+          {detail && <p className="mt-1 text-sm leading-relaxed text-muted">{detail}</p>}
+          {tz && (
+            <div className="mt-2">
+              <LocalTime tz={tz} />
+            </div>
+          )}
         </div>
+        <CardMotif className="hidden shrink-0 self-start sm:block" />
       </div>
 
-      <div className="relative px-5">
+      <div className="relative px-4 sm:px-6">
         <textarea
           aria-label={`Message to ${name}`}
           value={props.messageLoading ? "" : message}
           placeholder={props.messageLoading ? "Drafting something warm…" : ""}
           onChange={(e) => setMessage(e.target.value)}
           rows={2}
-          className="w-full resize-none rounded-2xl border border-line bg-cream px-4 py-3 text-[15px] leading-relaxed outline-none focus:border-coral"
+          className="w-full resize-none border border-line bg-cream px-4 py-4 text-[15px] leading-relaxed outline-none focus:border-accent"
         />
         {props.messageLoading && <Loader2 className="absolute right-8 top-4 h-4 w-4 animate-spin text-muted" />}
       </div>
 
       {hasBlank && (
-        <p className="mx-5 mt-2 rounded-xl bg-fuchsia-50 px-3 py-2 text-sm text-fuchsia-900">
+        <p className="mx-4 mt-2 bg-ochre-tint px-4 py-2 text-sm text-warn sm:mx-6">
           ✏️ Fill in the <b>[blank]</b> with your own words before sending.
         </p>
       )}
-      {error && <p className="mx-5 mt-2 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800">{error}</p>}
+      {error && <p className="mx-4 mt-2 bg-ochre-tint px-4 py-2 text-sm text-warn sm:mx-6">{error}</p>}
 
-      <div className="flex flex-wrap items-center gap-2 p-5 pt-3">
+      <div className="flex flex-wrap items-center gap-2 p-4 sm:p-6 sm:pt-4">
         {reachable ? (
           <>
             <button
               onClick={() => approve("auto")}
               disabled={busy || props.messageLoading || !message.trim() || hasBlank}
-              className="flex items-center gap-2 rounded-full bg-coral px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-coral-dark disabled:opacity-60"
+              className="flex items-center gap-2 bg-accent px-4 py-2 text-sm font-bold text-on-accent transition hover:bg-accent-deep disabled:opacity-60"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               {asleep && tz ? `Approve · sends ${localTimeLabel(tz, nextGoodTime(tz, now))} their time` : "Approve & send"}
@@ -128,14 +133,14 @@ export function ShowUpCard(props: Props) {
             <button
               onClick={() => openLink(whatsappLink(message, person?.phone))}
               disabled={props.messageLoading || hasBlank}
-              className="flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:brightness-95"
+              className="flex items-center gap-2 bg-accent px-4 py-2 text-sm font-bold text-on-accent transition hover:bg-accent-deep"
             >
               <MessageCircle className="h-4 w-4" /> Send on WhatsApp
             </button>
             <button
               onClick={() => openLink(smsLink(message, person?.phone))}
               disabled={props.messageLoading || hasBlank}
-              className="flex items-center gap-2 rounded-full bg-strong px-4 py-2.5 text-sm font-bold text-white transition hover:brightness-125"
+              className="flex items-center gap-2 bg-strong px-4 py-2 text-sm font-bold text-white transition hover:brightness-125"
             >
               <MessageSquareText className="h-4 w-4" /> SMS
             </button>
@@ -187,7 +192,7 @@ function IconButton({ label, onClick, children }: { label: string; onClick: () =
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="grid h-10 w-10 place-items-center rounded-full border border-line text-muted transition hover:bg-peach hover:text-ink"
+      className="grid h-12 w-12 place-items-center rounded-full border border-line text-muted transition hover:bg-tint hover:text-ink"
     >
       {children}
     </button>
