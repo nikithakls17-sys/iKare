@@ -73,7 +73,7 @@ export function getStatus() {
   };
 }
 
-export async function startWhatsApp() {
+export async function startWhatsApp(retried = false) {
   if (!whatsappEnabled() || state.client) return;
   state.status = "starting";
   state.error = null;
@@ -112,10 +112,17 @@ export async function startWhatsApp() {
     runScheduler().catch((e) => console.error("[whatsapp] scheduler failed", e));
   }, 20_000);
 
-  client.initialize().catch((e: unknown) => {
-    state.status = "error";
-    state.error = e instanceof Error ? e.message : String(e);
+  client.initialize().catch(async (e: unknown) => {
+    const message = e instanceof Error ? e.message : String(e);
     state.client = null;
+    // An old Chrome may still be holding the session folder; give it a moment and retry once.
+    if (/already running/i.test(message) && !retried) {
+      note("Waiting for the previous WhatsApp browser to close…");
+      await new Promise((r) => setTimeout(r, 8_000));
+      return startWhatsApp(true);
+    }
+    state.status = "error";
+    state.error = message;
   });
 }
 
@@ -352,13 +359,23 @@ function withTimeout<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
   ]);
 }
 
+/** Close a client and make sure its Chrome is gone, so a new one can reuse the session folder. */
+async function closeClient(client: WAClient) {
+  const browser = client.pupBrowser;
+  await withTimeout(client.destroy(), 10_000, "Closing WhatsApp").catch(() => {});
+  try {
+    browser?.process()?.kill("SIGKILL");
+  } catch {}
+  await new Promise((r) => setTimeout(r, 2_000)); // let Chrome release its profile lock
+}
+
 /** Restart the client from the saved session (no QR needed). */
 async function reconnect(reason: string) {
-  note(`WhatsApp stopped responding (${reason}). Reconnecting…`);
+  note(`WhatsApp stopped responding (${reason.slice(0, 80)}). Reconnecting…`);
   const old = state.client;
   state.client = null;
   state.status = "off";
-  if (old) await withTimeout(old.destroy(), 10_000, "Closing WhatsApp").catch(() => {});
+  if (old) await closeClient(old);
   await startWhatsApp();
 }
 
