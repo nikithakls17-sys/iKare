@@ -1,7 +1,7 @@
 "use client";
 
 import { addDays, format } from "date-fns";
-import { Heart, Home, Info, Monitor, Moon, Plus, Sun, Users } from "lucide-react";
+import { Bell, Heart, Home, Info, Monitor, Moon, Plus, Sun, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -27,9 +27,9 @@ export function Header() {
             </span>
             <span className="font-display text-2xl font-bold tracking-tight">iCare</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
           <WhatsAppPill />
-          <nav className="hidden gap-1 md:flex">
+          <nav className="hidden gap-1 lg:flex">
             {NAV.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
@@ -50,6 +50,13 @@ export function Header() {
           >
             <Info className="h-5 w-5" />
           </Link>
+          <Link
+            href="/settings"
+            aria-label="Notifications and settings"
+            className={`grid h-9 w-9 place-items-center rounded-full transition hover:bg-peach ${pathname === "/settings" ? "text-coral" : "text-muted"}`}
+          >
+            <Bell className="h-5 w-5" />
+          </Link>
           <ThemeToggle />
           </div>
         </div>
@@ -57,7 +64,7 @@ export function Header() {
       </header>
 
       {/* mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-line bg-paper/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-line bg-paper/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
         {NAV.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
@@ -120,7 +127,7 @@ function WhatsAppPill() {
   return (
     <Link
       href="/connect"
-      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${
+      className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold ${
         ready ? "bg-emerald-50 text-emerald-800" : "bg-peach text-coral-dark"
       }`}
     >

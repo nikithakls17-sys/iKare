@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { FavoritesToggle, useFavoritesOnly } from "@/components/favorites";
 import { useWhatsApp } from "@/components/live";
+import { NotifyBanner } from "@/components/notify-banner";
 import { momentChip, momentHeadline, ShowUpCard, type SendResult } from "@/components/moment-card";
 import { useToday } from "@/components/today-provider";
 import { seedDemo, updateMoment, updateOutbox, updatePerson } from "@/lib/store";
@@ -145,6 +146,8 @@ export default function TodayPage() {
           </p>
         )}
       </section>
+
+      <NotifyBanner />
 
       {error && <p className="mb-4 rounded-2xl bg-rose-50 p-4 text-sm text-rose-800">{error}</p>}
 

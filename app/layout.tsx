@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Nunito } from "next/font/google";
 import { Header } from "@/components/header";
+import { Notifier } from "@/components/notifier";
 import { TodayProvider } from "@/components/today-provider";
 import "./globals.css";
 
@@ -10,6 +11,12 @@ const body = Nunito({ variable: "--font-body", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "iCare — show up for the people you love",
   description: "Never miss the moments that matter to the people you love.",
+  applicationName: "iCare",
+  appleWebApp: { capable: true, title: "iCare", statusBarStyle: "default" },
+  icons: {
+    icon: [{ url: "/icons/favicon-32.png", sizes: "32x32" }, { url: "/icons/icon-any-192.png", sizes: "192x192" }],
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
@@ -31,7 +38,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full font-sans">
         <TodayProvider>
           <Header />
-          <main className="mx-auto w-full max-w-2xl px-4 pb-24 pt-6">{children}</main>
+          <Notifier />
+          <main className="mx-auto w-full max-w-2xl px-4 pb-24 pt-6 lg:pb-10">{children}</main>
         </TodayProvider>
       </body>
     </html>
