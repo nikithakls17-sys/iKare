@@ -1,5 +1,6 @@
 "use client";
 
+import { PageBanner } from "@/components/geo";
 import { Bell, BellOff, BellRing, Download, Share, Smartphone } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -70,15 +71,14 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-4xl font-bold tracking-tight">Settings</h1>
-        <p className="mt-1 text-muted">Reminders that help you show up, on your laptop or phone.</p>
-      </div>
+      <PageBanner eyebrow="Reminders" title="Settings">
+        Reminders that help you show up, on your laptop or phone.
+      </PageBanner>
 
       {/* Notifications */}
-      <section className="rounded-3xl border border-line bg-paper p-5">
-        <div className="flex items-start gap-3">
-          <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${on ? "bg-sage text-emerald-700" : "bg-peach text-coral"}`}>
+      <section className="geo-box border border-line bg-paper p-6">
+        <div className="flex items-start gap-4">
+          <div className={`grid h-12 w-12 shrink-0 place-items-center ${on ? "bg-moss text-accent" : "bg-tint text-accent"}`}>
             {on ? <BellRing className="h-5 w-5" /> : perm === "denied" ? <BellOff className="h-5 w-5" /> : <Bell className="h-5 w-5" />}
           </div>
           <div className="flex-1">
@@ -98,7 +98,7 @@ export default function SettingsPage() {
         <div className="mt-4 flex flex-wrap gap-2">
           {on ? (
             <>
-              <button onClick={test} className="rounded-full bg-coral px-4 py-2 text-sm font-bold text-white hover:bg-coral-dark">
+              <button onClick={test} className="bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-accent-deep">
                 Send a test
               </button>
               <button
@@ -106,13 +106,13 @@ export default function SettingsPage() {
                   clearSent();
                   setNote("Done. Reminders you've already seen today can show again.");
                 }}
-                className="rounded-full border border-line px-4 py-2 text-sm font-bold hover:bg-peach"
+                className="border border-line px-4 py-2 text-sm font-bold hover:bg-tint"
               >
                 Replay today&apos;s reminders
               </button>
               <button
                 onClick={() => update({ ...s, enabled: false })}
-                className="rounded-full px-4 py-2 text-sm font-bold text-muted hover:bg-peach"
+                className="px-4 py-2 text-sm font-bold text-muted hover:bg-tint"
               >
                 Turn off
               </button>
@@ -121,23 +121,23 @@ export default function SettingsPage() {
             perm !== "unsupported" && (
               <button
                 onClick={enable}
-                className="flex items-center gap-2 rounded-full bg-coral px-5 py-2.5 font-bold text-white shadow-sm hover:bg-coral-dark"
+                className="flex items-center gap-2 bg-accent px-6 py-2 font-bold text-on-accent hover:bg-accent-deep"
               >
                 <Bell className="h-4 w-4" /> Turn on notifications
               </button>
             )
           )}
         </div>
-        {note && <p className="mt-3 rounded-xl bg-cream px-3 py-2 text-sm">{note}</p>}
+        {note && <p className="mt-4 bg-cream px-4 py-2 text-sm">{note}</p>}
 
-        <div className={`mt-5 space-y-1 ${on ? "" : "pointer-events-none opacity-50"}`}>
+        <div className={`mt-6 space-y-1 ${on ? "" : "pointer-events-none opacity-50"}`}>
           {(Object.keys(KIND_LABELS) as NotifyKind[]).map((k) => (
-            <label key={k} className="flex cursor-pointer items-center gap-3 rounded-2xl px-2 py-2 hover:bg-cream">
+            <label key={k} className="flex cursor-pointer items-center gap-4 px-2 py-2 hover:bg-cream">
               <input
                 type="checkbox"
                 checked={s.kinds[k]}
                 onChange={(e) => update({ ...s, kinds: { ...s.kinds, [k]: e.target.checked } })}
-                className="h-5 w-5 accent-[var(--coral)]"
+                className="h-5 w-5 accent-[var(--accent)]"
               />
               <span className="flex-1">
                 <span className="block font-semibold">{KIND_LABELS[k].title}</span>
@@ -148,12 +148,12 @@ export default function SettingsPage() {
                   type="time"
                   value={s.digestTime}
                   onChange={(e) => update({ ...s, digestTime: e.target.value || "09:00" })}
-                  className="rounded-xl border border-line bg-cream px-2 py-1 text-sm"
+                  className="border border-line bg-cream px-2 py-1 text-sm"
                 />
               )}
             </label>
           ))}
-          <div className="flex flex-wrap items-center gap-2 px-2 pt-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2 px-2 pt-4 text-sm">
             <span className="font-semibold">Style:</span>
             {(
               [
@@ -164,7 +164,7 @@ export default function SettingsPage() {
               <button
                 key={v}
                 onClick={() => update({ ...s, style: v })}
-                className={`rounded-full px-3 py-1.5 font-bold ${s.style === v ? "bg-strong text-white" : "border border-line hover:bg-peach"}`}
+                className={`px-4 py-2 font-bold ${s.style === v ? "bg-strong text-white" : "border border-line hover:bg-tint"}`}
               >
                 {label}
               </button>
@@ -174,9 +174,9 @@ export default function SettingsPage() {
       </section>
 
       {/* Install */}
-      <section className="rounded-3xl border border-line bg-paper p-5">
-        <div className="flex items-start gap-3">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-peach text-coral">
+      <section className="geo-box border border-line bg-paper p-6">
+        <div className="flex items-start gap-4">
+          <div className="grid h-12 w-12 shrink-0 place-items-center bg-tint text-accent">
             <Smartphone className="h-5 w-5" />
           </div>
           <div className="flex-1">
@@ -189,26 +189,26 @@ export default function SettingsPage() {
           </div>
         </div>
         {!installed && (
-          <div className="mt-4 space-y-3 text-[15px]">
+          <div className="mt-4 space-y-4 text-[15px]">
             {installEvt && (
               <button
                 onClick={async () => {
                   await installEvt.prompt();
                   setInstallEvt(null);
                 }}
-                className="flex items-center gap-2 rounded-full bg-coral px-5 py-2.5 font-bold text-white hover:bg-coral-dark"
+                className="flex items-center gap-2 bg-accent px-6 py-2 font-bold text-on-accent hover:bg-accent-deep"
               >
                 <Download className="h-4 w-4" /> Install iKare
               </button>
             )}
-            <div className={`rounded-2xl bg-cream p-4 ${isIOS ? "ring-2 ring-coral/40" : ""}`}>
+            <div className={` bg-cream p-4 ${isIOS ? "ring-2 ring-accent/40" : ""}`}>
               <p className="font-bold">iPhone / iPad (Safari)</p>
               <p className="text-muted">
                 Tap <Share className="inline h-4 w-4" /> <b>Share</b> → <b>Add to Home Screen</b>. Then open iKare from the
                 home screen and turn on notifications here (iOS 16.4+).
               </p>
             </div>
-            <div className="rounded-2xl bg-cream p-4">
+            <div className="bg-cream p-4">
               <p className="font-bold">Android (Chrome) or laptop (Chrome / Edge)</p>
               <p className="text-muted">
                 Tap the <b>⋮</b> menu → <b>Install app</b> (or the install icon in the address bar).

@@ -1,5 +1,6 @@
 "use client";
 
+import { PageBanner } from "@/components/geo";
 import { FileText, ImageIcon, Loader2, NotebookPen, Sparkles, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -171,10 +172,11 @@ export default function AddPage() {
 
   return (
     <div>
-      <h1 className="font-display text-4xl font-bold tracking-tight">Add a moment</h1>
-      <p className="mt-1 text-muted">Share what a friend told you. iKare finds what&apos;s worth following up on.</p>
+      <PageBanner eyebrow="Capture" title="Add a moment">
+        Share what a friend told you. iKare finds what&apos;s worth following up on.
+      </PageBanner>
 
-      <div className="mt-6 flex w-full max-w-md rounded-full border border-line bg-paper p-1">
+      <div className="flex w-full max-w-md border border-line bg-paper p-1">
         {(
           [
             ["screenshot", "Screenshot", ImageIcon],
@@ -189,7 +191,7 @@ export default function AddPage() {
               setDrafts(null);
               setError(null);
             }}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-2 py-2 text-sm font-bold transition ${
+            className={`flex flex-1 items-center justify-center gap-2 px-2 py-2 text-sm font-bold transition ${
               mode === key ? "bg-strong text-white" : "text-muted hover:text-ink"
             }`}
           >
@@ -201,16 +203,16 @@ export default function AddPage() {
       <div className="mt-4">
         {mode === "screenshot" ? (
           image ? (
-            <div className="relative overflow-hidden rounded-3xl border border-line bg-paper p-3">
+            <div className="geo-box overflow-hidden border border-line bg-paper p-4">
               {/* eslint-disable-next-line @next/next/no-img-element -- local data URL preview */}
-              <img src={image.preview} alt="Chat screenshot" className="mx-auto max-h-96 rounded-2xl object-contain" />
+              <img src={image.preview} alt="Chat screenshot" className="mx-auto max-h-96 object-contain" />
               <button
                 onClick={() => {
                   setImage(null);
                   setDrafts(null);
                 }}
                 aria-label="Remove screenshot"
-                className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-strong/80 text-white hover:bg-strong"
+                className="absolute right-4 top-4 grid h-12 w-12 place-items-center rounded-full bg-strong/80 text-white hover:bg-strong"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -219,24 +221,24 @@ export default function AddPage() {
             <>
               <div
                 {...getRootProps()}
-                className={`cursor-pointer rounded-3xl border-2 border-dashed px-6 py-12 text-center transition ${
-                  isDragActive ? "border-coral bg-peach" : "border-line bg-paper hover:border-coral"
+                className={`cursor-pointer border-2 border-dashed px-6 py-12 text-center transition ${
+                  isDragActive ? "border-accent bg-tint" : "border-line bg-paper hover:border-accent"
                 }`}
               >
                 <input {...getInputProps()} />
-                <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-peach text-coral">
+                <div className="mx-auto mb-4 grid h-14 w-14 place-items-center bg-tint text-accent">
                   <Upload className="h-6 w-6" />
                 </div>
                 <p className="font-bold">Drop a chat screenshot here</p>
                 <p className="mt-1 text-sm text-muted">WhatsApp, iMessage, anything · or tap to choose</p>
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
                 <span className="text-muted">No screenshot handy? Try</span>
                 {SAMPLES.map((s) => (
                   <button
                     key={s.src}
                     onClick={() => loadSample(s.src)}
-                    className="rounded-full border border-line bg-paper px-3 py-1 font-semibold hover:bg-peach"
+                    className="border border-line bg-paper px-4 py-1 font-semibold hover:bg-tint"
                   >
                     {s.label}
                   </button>
@@ -245,7 +247,7 @@ export default function AddPage() {
             </>
           )
         ) : mode === "export" ? (
-          <label className="block cursor-pointer rounded-3xl border-2 border-dashed border-line bg-paper px-6 py-10 text-center transition hover:border-coral">
+          <label className="block cursor-pointer border-2 border-dashed border-line bg-paper px-6 py-10 text-center transition hover:border-accent">
             <input
               type="file"
               accept=".txt,text/plain"
@@ -261,7 +263,7 @@ export default function AddPage() {
                 setExportFile({ name: file.name, withName, text: text.split(/\r?\n/).slice(-400).join("\n") });
               }}
             />
-            <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-peach text-coral">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center bg-tint text-accent">
               <FileText className="h-6 w-6" />
             </div>
             {exportFile ? (
@@ -287,7 +289,7 @@ export default function AddPage() {
             onChange={(e) => setNote(e.target.value)}
             rows={4}
             placeholder="e.g. Sam has his driving test on Friday. Mom's seeing the doctor Thursday."
-            className="w-full rounded-3xl border border-line bg-paper px-5 py-4 text-[15px] leading-relaxed outline-none focus:border-coral"
+            className="w-full border border-line bg-paper px-6 py-4 text-[15px] leading-relaxed outline-none focus:border-accent"
           />
         )}
       </div>
@@ -296,7 +298,7 @@ export default function AddPage() {
         <button
           onClick={extract}
           disabled={!canExtract || loading}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-coral px-6 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-coral-dark disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-4 flex w-full items-center justify-center gap-2 bg-accent px-6 py-4 text-base font-bold text-on-accent transition hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? (
             <>
@@ -310,11 +312,11 @@ export default function AddPage() {
         </button>
       )}
 
-      {error && <p className="mt-4 rounded-2xl bg-rose-50 p-4 text-sm text-rose-800">{error}</p>}
+      {error && <p className="mt-4 bg-ochre-tint p-4 text-sm text-warn">{error}</p>}
 
       {drafts && (
         <section className="mt-8">
-          <h2 className="font-display text-2xl font-bold">
+          <h2 className="font-display text-2xl font-semibold">
             {drafts.length === 0
               ? "Nothing to follow up on here"
               : `Found ${drafts.length} moment${drafts.length === 1 ? "" : "s"}`}
@@ -331,25 +333,25 @@ export default function AddPage() {
               return (
                 <div
                   key={i}
-                  className={`rise rounded-3xl border bg-paper p-5 transition ${
+                  className={`rise border bg-paper p-6 transition ${
                     d.keep ? "border-line" : "border-line opacity-50"
                   }`}
                   style={{ animationDelay: `${i * 80}ms` }}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <input
                       type="checkbox"
                       checked={d.keep}
                       onChange={(e) => update(i, { keep: e.target.checked })}
-                      className="h-5 w-5 accent-[var(--coral)]"
+                      className="h-5 w-5 accent-[var(--accent)]"
                       aria-label="Keep this moment"
                     />
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${meta.tint}`}>
+                    <span className={`px-2 py-1 text-xs font-bold ${meta.tint}`}>
                       {meta.emoji} {meta.label}
                     </span>
                   </div>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     <Field label="Person">
                       <select
                         value={d.personId}
@@ -395,7 +397,7 @@ export default function AddPage() {
                       />
                     </Field>
                   </div>
-                  <Field label="Message draft" className="mt-3">
+                  <Field label="Message draft" className="mt-4">
                     <textarea
                       value={d.suggestedMessage}
                       onChange={(e) => update(i, { suggestedMessage: e.target.value })}
@@ -408,12 +410,12 @@ export default function AddPage() {
             })}
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap gap-4">
             {drafts.length > 0 && (
               <button
                 onClick={save}
                 disabled={saving || keptCount === 0}
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-coral px-6 py-3.5 font-bold text-white shadow-sm transition hover:bg-coral-dark disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-2 bg-accent px-6 py-4 font-bold text-on-accent transition hover:bg-accent-deep disabled:opacity-50"
               >
                 {saving && <Loader2 className="h-5 w-5 animate-spin" />}
                 Save {keptCount} moment{keptCount === 1 ? "" : "s"}
@@ -421,12 +423,12 @@ export default function AddPage() {
             )}
             <button
               onClick={() => setDrafts(null)}
-              className="rounded-full border border-line px-6 py-3.5 font-bold transition hover:bg-peach"
+              className="border border-line px-6 py-4 font-bold transition hover:bg-tint"
             >
               Start over
             </button>
           </div>
-          <p className="mt-3 text-center text-xs text-muted">
+          <p className="mt-4 text-center text-xs text-muted">
             🔒 Your screenshot isn&apos;t stored, only the moments you save.
           </p>
         </section>
@@ -436,7 +438,7 @@ export default function AddPage() {
 }
 
 const inputCls =
-  "w-full rounded-xl border border-line bg-cream px-3 py-2 text-[15px] outline-none focus:border-coral";
+  "w-full border border-line bg-cream px-4 py-2 text-[15px] outline-none focus:border-accent";
 
 function Field({
   label,

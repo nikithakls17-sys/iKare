@@ -26,11 +26,11 @@ export default function PersonPage() {
   const [result, setResult] = useState<string | null>(null);
 
   const person = people.find((p) => p.id === id);
-  if (loading) return <div className="h-64 animate-pulse rounded-3xl bg-paper" />;
+  if (loading) return <div className="h-64 animate-pulse bg-paper" />;
   if (!person) {
     return (
       <p className="text-muted">
-        Person not found. <Link href="/people" className="font-bold text-coral">Back to People</Link>
+        Person not found. <Link href="/people" className="font-bold text-accent">Back to People</Link>
       </p>
     );
   }
@@ -132,14 +132,14 @@ export default function PersonPage() {
       </Link>
 
       <div className="flex items-start gap-4">
-        <div className="grid h-16 w-16 shrink-0 place-items-center rounded-3xl bg-peach text-4xl">{person.emoji}</div>
+        <div className="grid h-16 w-16 shrink-0 place-items-center bg-tint text-4xl">{person.emoji}</div>
         <div className="min-w-0 flex-1">
-          <h1 className="font-display text-3xl font-bold tracking-tight">{person.name}</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">{person.name}</h1>
           <p className="text-muted">
             {person.relationship ?? "—"}
             {person.last_contact_at && ` · talked ${formatDistanceToNowStrict(parseISO(person.last_contact_at))} ago`}
           </p>
-          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <LocalTime tz={person.timezone} />
             {person.timezone && <span className="text-xs text-muted">{offsetLabel(person.timezone, now)}</span>}
           </div>
@@ -153,11 +153,11 @@ export default function PersonPage() {
 
       {/* What's going on */}
       <section className="mt-8">
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-muted">
+        <h2 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-muted">
           <CalendarDays className="h-4 w-4" /> What&apos;s going on with {person.name}
         </h2>
         {goingOn.length === 0 ? (
-          <p className="rounded-3xl border border-dashed border-line bg-paper p-6 text-center text-muted">
+          <p className="border border-dashed border-line bg-paper p-6 text-center text-muted">
             Nothing coming up that we know of. A quick hello is always nice.
           </p>
         ) : (
@@ -172,8 +172,8 @@ export default function PersonPage() {
                 <li key={m.id}>
                   <button
                     onClick={() => pick(m)}
-                    className={`flex w-full items-center gap-3 rounded-2xl border bg-paper px-4 py-3 text-left transition hover:border-coral ${
-                      aboutMoment === m.id ? "border-coral ring-2 ring-coral/30" : "border-line"
+                    className={`flex w-full items-center gap-4 border bg-paper px-4 py-4 text-left transition hover:border-accent ${
+                      aboutMoment === m.id ? "border-accent ring-2 ring-accent/30" : "border-line"
                     }`}
                   >
                     <span className="text-2xl">{meta.emoji}</span>
@@ -183,7 +183,7 @@ export default function PersonPage() {
                       </p>
                       {m.detail && <p className="truncate text-sm text-muted">{m.detail}</p>}
                     </div>
-                    <span className="shrink-0 text-xs font-bold text-coral">
+                    <span className="shrink-0 text-xs font-bold text-accent">
                       {m.followup_date <= todayStr ? "Ask now" : "Ask about it"}
                     </span>
                   </button>
@@ -195,13 +195,13 @@ export default function PersonPage() {
       </section>
 
       {/* Composer */}
-      <section className="mt-6 rounded-3xl border border-line bg-paper p-5">
+      <section className="geo-box mt-6 border border-line bg-paper p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-bold">Message {person.name}</h2>
           <button
             onClick={draftHello}
             disabled={busy !== null}
-            className="flex items-center gap-1.5 rounded-full bg-sage px-3 py-1.5 text-sm font-bold text-emerald-900 hover:brightness-95 disabled:opacity-60"
+            className="flex items-center gap-2 bg-moss px-4 py-2 text-sm font-bold text-ink hover:bg-accent-deep disabled:opacity-60"
           >
             {busy === "draft" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             Just say hi
@@ -212,7 +212,7 @@ export default function PersonPage() {
           onChange={(e) => setMessage(e.target.value)}
           rows={3}
           placeholder={`Pick something above, tap “Just say hi”, or write your own…`}
-          className="mt-3 w-full resize-none rounded-2xl border border-line bg-cream px-4 py-3 text-[15px] leading-relaxed outline-none focus:border-coral"
+          className="mt-4 w-full resize-none border border-line bg-cream px-4 py-4 text-[15px] leading-relaxed outline-none focus:border-accent"
         />
 
         {win !== "good" && person.timezone && (
@@ -226,7 +226,7 @@ export default function PersonPage() {
           <button
             onClick={() => send("now")}
             disabled={busy !== null || !message.trim() || /\[[^\]]+\]/.test(message)}
-            className="flex items-center justify-center gap-2 rounded-2xl bg-coral px-4 py-3 font-bold text-white shadow-sm transition hover:bg-coral-dark disabled:opacity-50"
+            className="flex items-center justify-center gap-2 bg-accent px-4 py-4 font-bold text-on-accent transition hover:bg-accent-deep disabled:opacity-50"
           >
             {busy === "now" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -240,7 +240,7 @@ export default function PersonPage() {
           <button
             onClick={() => send("morning")}
             disabled={busy !== null || !message.trim() || /\[[^\]]+\]/.test(message)}
-            className="flex flex-col items-center justify-center rounded-2xl border-2 border-coral/40 px-4 py-2 font-bold text-coral transition hover:bg-peach disabled:opacity-50"
+            className="flex flex-col items-center justify-center border-2 border-accent/40 px-4 py-2 font-bold text-accent transition hover:bg-tint disabled:opacity-50"
           >
             <span className="flex items-center gap-2">
               {busy === "morning" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sunrise className="h-4 w-4" />}
@@ -260,7 +260,7 @@ export default function PersonPage() {
           </p>
         )}
         {result && (
-          <p className="mt-3 flex items-center gap-2 rounded-xl bg-sage px-3 py-2 text-sm font-semibold text-emerald-900">
+          <p className="mt-4 flex items-center gap-2 bg-moss px-4 py-2 text-sm font-semibold text-ink">
             <CheckCircle2 className="h-4 w-4" /> {result}
           </p>
         )}
@@ -271,7 +271,7 @@ export default function PersonPage() {
           <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-muted">Waiting to send</h2>
           <ul className="space-y-2 text-sm">
             {queued.map((o) => (
-              <li key={o.id} className="rounded-2xl border border-line bg-paper px-4 py-3">
+              <li key={o.id} className="geo-box border border-line bg-paper px-4 py-4">
                 “{o.text}”
                 <span className="block text-muted">
                   {localTimeLabel(tz, new Date(o.send_at))} {cityName(tz)} time
@@ -285,10 +285,10 @@ export default function PersonPage() {
       {history.length > 0 && (
         <section className="mt-8">
           <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-muted">Times you showed up</h2>
-          <ul className="space-y-1.5 text-sm">
+          <ul className="space-y-2 text-sm">
             {history.map((m) => (
               <li key={m.id} className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                <CheckCircle2 className="h-4 w-4 text-accent" />
                 <span className="font-semibold">{m.title}</span>
                 {m.completed_at && <span className="text-muted">· {format(parseISO(m.completed_at), "MMM d")}</span>}
               </li>

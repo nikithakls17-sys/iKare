@@ -31,8 +31,8 @@ export default function AboutPage() {
   return (
     <div className="space-y-10">
       <section>
-        <p className="text-sm font-semibold uppercase tracking-wider text-coral">About iKare</p>
-        <h1 className="font-display mt-1 text-4xl font-bold leading-tight tracking-tight">
+        <p className="text-sm font-semibold uppercase tracking-wider text-accent">About iKare</p>
+        <h1 className="font-display mt-1 text-4xl font-semibold leading-tight tracking-tight">
           Never miss the moments that matter to the people you love.
         </h1>
         <p className="mt-4 text-lg text-muted">
@@ -42,10 +42,10 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2">
+      <section className="grid gap-4 sm:grid-cols-2">
         {STEPS.map(({ icon: Icon, title, body }) => (
-          <div key={title} className="rounded-3xl border border-line bg-paper p-5">
-            <div className="mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-peach text-coral">
+          <div key={title} className="geo-box border border-line bg-paper p-6">
+            <div className="mb-4 grid h-12 w-12 place-items-center bg-tint text-accent">
               <Icon className="h-5 w-5" />
             </div>
             <h2 className="text-lg font-bold">{title}</h2>
@@ -54,9 +54,9 @@ export default function AboutPage() {
         ))}
       </section>
 
-      <section className="rounded-3xl bg-strong p-6 text-white">
-        <HeartHandshake className="h-8 w-8 text-coral" />
-        <h2 className="font-display mt-3 text-2xl font-bold">A bridge, not a replacement</h2>
+      <section className="bg-strong p-6 text-white">
+        <HeartHandshake className="h-8 w-8 text-accent" />
+        <h2 className="font-display mt-4 text-2xl font-semibold">A bridge, not a replacement</h2>
         <p className="mt-2 opacity-85">
           iKare never talks to your friends on its own. Every message is yours: you read it, change it, and approve
           it. The AI only helps you remember and find the words.
@@ -65,9 +65,9 @@ export default function AboutPage() {
 
       <section>
         <h2 className="flex items-center gap-2 text-xl font-bold">
-          <ShieldCheck className="h-5 w-5 text-emerald-600" /> Privacy
+          <ShieldCheck className="h-5 w-5 text-accent" /> Privacy
         </h2>
-        <ul className="mt-3 list-disc space-y-1.5 pl-5 text-muted">
+        <ul className="mt-4 list-disc space-y-2 pl-6 text-muted">
           <li>Screenshots and chat exports are processed and thrown away. Only the moments you save are kept.</li>
           <li>Linked WhatsApp runs on your own computer. Only short chat snippets go to the AI to spot moments.</li>
           <li>Nothing is sent to anyone without you tapping Approve.</li>
@@ -82,13 +82,13 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <section className="rounded-3xl border border-line bg-paper p-6 text-center">
-        <p className="font-display text-xl font-bold">
+      <section className="geo-box border border-line bg-paper p-6 text-center">
+        <p className="font-display text-xl font-semibold">
           Staying connected isn&apos;t about remembering birthdays. It&apos;s about showing up.
         </p>
         <Link
           href="/"
-          className="mt-4 inline-flex rounded-full bg-coral px-5 py-3 font-bold text-white hover:bg-coral-dark"
+          className="mt-4 inline-flex bg-accent px-6 py-4 font-bold text-on-accent hover:bg-accent-deep"
         >
           See who to show up for today
         </Link>
