@@ -1,6 +1,6 @@
 "use client";
 
-// Browser notifications for iCare. Runs while the app is open or installed and
+// Browser notifications for iKare. Runs while the app is open or installed and
 // recently used. (Push while fully closed needs the deployed https version.)
 
 export type NotifyKind = "due" | "drift" | "whatsapp" | "morning" | "digest";

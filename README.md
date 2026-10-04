@@ -1,17 +1,17 @@
-# 💛 iCare
+# 💛 iKare
 
 **Never miss the moments that matter to the people you love.**
 
 People don't forget their friends exist. They forget the *follow-up*. A friend says "my interview is Monday", Mom mentions a doctor visit Thursday, and life gets busy before you ever ask how it went.
 
-iCare turns what people tell you into chances to show up for them:
+iKare turns what people tell you into chances to show up for them:
 
 1. **Capture**: drop in a chat screenshot or type a quick note.
 2. **Detect**: Claude finds the moments (interview, exam, appointment, feeling sick, trip, big news) and picks the right day to check in.
 3. **Remind**: on that day, a card appears in **Today**: *"Ask Priya how the job interview went."*
 4. **Show up**: one tap opens WhatsApp or SMS with a warm message pre-typed. You edit it and send it yourself.
 
-> AI is a bridge, not a replacement. iCare never texts anyone on its own.
+> AI is a bridge, not a replacement. iKare never texts anyone on its own.
 > 🔒 Screenshots are processed and discarded. Only the extracted moments are saved.
 
 ## Stack
@@ -30,7 +30,7 @@ npm run dev
 
 Open http://localhost:3000/?demo=1
 
-**Supabase is optional.** Without Supabase keys, iCare saves data in the browser's localStorage, so the demo works out of the box. To use Supabase:
+**Supabase is optional.** Without Supabase keys, iKare saves data in the browser's localStorage, so the demo works out of the box. To use Supabase:
 
 1. Create a project at supabase.com.
 2. In the SQL Editor, run `supabase/schema.sql`.
@@ -61,4 +61,4 @@ Add `?demo=1` to any URL to show the **time travel** bar (it stays on until `?de
 5. **Time travel** to the day after Monday → "Ask Priya how the job interview went" appears.
 6. **Send on WhatsApp** → WhatsApp opens with the message pre-typed.
 7. **People** → "Priya: 4 showed up."
-8. **Close:** "iCare doesn't text for you. It helps *you* be there."
+8. **Close:** "iKare doesn't text for you. It helps *you* be there."

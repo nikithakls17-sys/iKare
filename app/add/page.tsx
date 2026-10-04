@@ -123,7 +123,7 @@ export default function AddPage() {
         })),
       );
     } catch {
-      setError("Couldn't reach iCare. Check your connection and try again.");
+      setError("Couldn't reach iKare. Check your connection and try again.");
     } finally {
       clearInterval(timer);
       setLoading(false);
@@ -172,7 +172,7 @@ export default function AddPage() {
   return (
     <div>
       <h1 className="font-display text-4xl font-bold tracking-tight">Add a moment</h1>
-      <p className="mt-1 text-muted">Share what a friend told you. iCare finds what&apos;s worth following up on.</p>
+      <p className="mt-1 text-muted">Share what a friend told you. iKare finds what&apos;s worth following up on.</p>
 
       <div className="mt-6 flex w-full max-w-md rounded-full border border-line bg-paper p-1">
         {(

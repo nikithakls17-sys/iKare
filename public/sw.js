@@ -1,4 +1,4 @@
-// iCare service worker: makes the app installable, keeps a tiny offline fallback,
+// iKare service worker: makes the app installable, keeps a tiny offline fallback,
 // and opens the right page when a notification is tapped.
 
 const CACHE = "icare-v1";
@@ -45,7 +45,7 @@ self.addEventListener("notificationclick", (event) => {
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
   event.waitUntil(
-    self.registration.showNotification(data.title || "iCare", {
+    self.registration.showNotification(data.title || "iKare", {
       body: data.body || "",
       icon: "/icons/icon-any-192.png",
       badge: "/icons/icon-any-192.png",

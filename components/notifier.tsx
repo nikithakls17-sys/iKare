@@ -57,7 +57,7 @@ export function Notifier() {
       }
       const rest = fresh.slice(MAX_PER_ROUND);
       if (rest.length) {
-        await showNotification(`iCare: ${rest.length} more to show up for`, rest.map((a) => a.title).join(" · "), "/");
+        await showNotification(`iKare: ${rest.length} more to show up for`, rest.map((a) => a.title).join(" · "), "/");
         rest.forEach((a) => markSent(a.key));
       }
     })().finally(() => {
@@ -103,7 +103,7 @@ function buildAlerts(
         alerts.push({
           key: `whatsapp:${m.id}`,
           title: `🆕 ${p?.name ?? "Someone"} mentioned: ${m.title}`,
-          body: m.detail ?? "iCare will remind you to follow up.",
+          body: m.detail ?? "iKare will remind you to follow up.",
           url: p ? `/people/${p.id}` : "/",
         });
       }

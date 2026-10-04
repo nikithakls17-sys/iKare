@@ -13,7 +13,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const { action } = await request.json();
   if (!whatsappEnabled()) {
-    return Response.json({ error: "WhatsApp linking only works when iCare runs on your computer." }, { status: 400 });
+    return Response.json({ error: "WhatsApp linking only works when iKare runs on your computer." }, { status: 400 });
   }
   if (action === "connect") await startWhatsApp();
   if (action === "logout") await logoutWhatsApp();

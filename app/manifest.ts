@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "iCare — show up for the people you love",
-    short_name: "iCare",
+    name: "iKare — show up for the people you love",
+    short_name: "iKare",
     description: "Never miss the moments that matter to the people you love.",
     start_url: "/",
     scope: "/",

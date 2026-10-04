@@ -300,8 +300,8 @@ function EmptyState({ hasAny, onSeed }: { hasAny: boolean; onSeed: () => void })
       </h2>
       <p className="mx-auto mt-2 max-w-sm text-muted">
         {hasAny
-          ? "Enjoy the quiet. When a friend shares something big, iCare will remind you to ask."
-          : "Link WhatsApp, drop in a chat screenshot, or write a quick note. iCare finds the moments worth following up on."}
+          ? "Enjoy the quiet. When a friend shares something big, iKare will remind you to ask."
+          : "Link WhatsApp, drop in a chat screenshot, or write a quick note. iKare finds the moments worth following up on."}
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <Link

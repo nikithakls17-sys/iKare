@@ -6,7 +6,7 @@ import { guessTimezone, localDateStr } from "@/lib/tz";
 import type { Person } from "@/lib/types";
 import * as db from "./db";
 
-// Links the user's WhatsApp (like WhatsApp Web) so iCare can read incoming chats,
+// Links the user's WhatsApp (like WhatsApp Web) so iKare can read incoming chats,
 // detect moments, and send approved messages. Runs inside the Next.js server process.
 // Local only: needs a long-running process + Chrome, so it is disabled on Vercel.
 
@@ -198,7 +198,7 @@ async function handleMessage(msg: Message) {
   }, EXTRACT_DEBOUNCE_MS);
 }
 
-/** Read recent chats once after linking so iCare is useful immediately. */
+/** Read recent chats once after linking so iKare is useful immediately. */
 async function scanRecentChats() {
   if (!state.client || state.scanning) return;
   state.scanning = true;

@@ -31,8 +31,8 @@ export default function UnlockPage() {
       <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-coral text-white shadow-sm">
         <Heart className="h-8 w-8" fill="currentColor" />
       </div>
-      <h1 className="font-display mt-5 text-3xl font-bold">Welcome to iCare</h1>
-      <p className="mt-2 text-muted">This iCare is private. Enter the passcode to continue.</p>
+      <h1 className="font-display mt-5 text-3xl font-bold">Welcome to iKare</h1>
+      <p className="mt-2 text-muted">This iKare is private. Enter the passcode to continue.</p>
       <form onSubmit={submit} className="mt-6 space-y-3">
         <div className="relative">
           <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />

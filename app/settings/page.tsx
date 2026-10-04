@@ -50,7 +50,7 @@ export default function SettingsPage() {
     setPerm(p);
     if (p === "granted") {
       update({ ...s, enabled: true });
-      await showNotification("💛 iCare notifications are on", "We'll nudge you when it's time to show up for someone.", "/");
+      await showNotification("💛 iKare notifications are on", "We'll nudge you when it's time to show up for someone.", "/");
     } else if (p === "denied") {
       setNote("Notifications are blocked. Allow them in your browser's site settings (the lock icon next to the address).");
     }
@@ -85,9 +85,9 @@ export default function SettingsPage() {
             <h2 className="text-lg font-bold">Notifications</h2>
             <p className="text-sm text-muted">
               {perm === "unsupported"
-                ? "This browser doesn't support notifications. On iPhone, install iCare to your Home Screen first (below)."
+                ? "This browser doesn't support notifications. On iPhone, install iKare to your Home Screen first (below)."
                 : on
-                  ? "On. iCare checks every minute while it's open or installed."
+                  ? "On. iKare checks every minute while it's open or installed."
                   : perm === "denied"
                     ? "Blocked in your browser settings."
                     : "Off. Turn on to get nudges like “You haven't talked to Kenji in 34 days”."}
@@ -184,7 +184,7 @@ export default function SettingsPage() {
             <p className="text-sm text-muted">
               {installed
                 ? "You're using the installed app. 🎉"
-                : "Add iCare to your home screen. It opens full-screen like a normal app."}
+                : "Add iKare to your home screen. It opens full-screen like a normal app."}
             </p>
           </div>
         </div>
@@ -198,13 +198,13 @@ export default function SettingsPage() {
                 }}
                 className="flex items-center gap-2 rounded-full bg-coral px-5 py-2.5 font-bold text-white hover:bg-coral-dark"
               >
-                <Download className="h-4 w-4" /> Install iCare
+                <Download className="h-4 w-4" /> Install iKare
               </button>
             )}
             <div className={`rounded-2xl bg-cream p-4 ${isIOS ? "ring-2 ring-coral/40" : ""}`}>
               <p className="font-bold">iPhone / iPad (Safari)</p>
               <p className="text-muted">
-                Tap <Share className="inline h-4 w-4" /> <b>Share</b> → <b>Add to Home Screen</b>. Then open iCare from the
+                Tap <Share className="inline h-4 w-4" /> <b>Share</b> → <b>Add to Home Screen</b>. Then open iKare from the
                 home screen and turn on notifications here (iOS 16.4+).
               </p>
             </div>

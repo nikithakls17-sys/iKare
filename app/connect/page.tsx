@@ -22,7 +22,7 @@ export default function ConnectPage() {
     <div>
       <h1 className="font-display text-4xl font-bold tracking-tight">Connect WhatsApp</h1>
       <p className="mt-1 text-muted">
-        iCare listens for the moments friends share, drafts a follow-up, and sends it from your WhatsApp
+        iKare listens for the moments friends share, drafts a follow-up, and sends it from your WhatsApp
         only when you approve.
       </p>
 
@@ -31,7 +31,7 @@ export default function ConnectPage() {
           <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted" />
         ) : !wa.enabled ? (
           <p className="text-muted">
-            Live WhatsApp linking runs when iCare is on your own computer (it needs a browser session that
+            Live WhatsApp linking runs when iKare is on your own computer (it needs a browser session that
             stays open). On this deployed version, use the one-tap WhatsApp buttons, screenshots, or chat
             exports instead.
           </p>

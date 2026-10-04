@@ -25,7 +25,7 @@ export function Header() {
             <span className="grid h-9 w-9 place-items-center rounded-2xl bg-coral text-white shadow-sm">
               <Heart className="h-5 w-5" fill="currentColor" />
             </span>
-            <span className="font-display text-2xl font-bold tracking-tight">iCare</span>
+            <span className="font-display text-2xl font-bold tracking-tight">iKare</span>
           </Link>
           <div className="flex items-center gap-1 sm:gap-2">
           <WhatsAppPill />
@@ -45,7 +45,7 @@ export function Header() {
           </nav>
           <Link
             href="/about"
-            aria-label="About iCare"
+            aria-label="About iKare"
             className={`grid h-9 w-9 place-items-center rounded-full transition hover:bg-peach ${pathname === "/about" ? "text-coral" : "text-muted"}`}
           >
             <Info className="h-5 w-5" />

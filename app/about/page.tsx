@@ -2,13 +2,13 @@ import { Globe2, HeartHandshake, MessageCircleHeart, ScanSearch, ShieldCheck, Sp
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "About · iCare" };
+export const metadata: Metadata = { title: "About · iKare" };
 
 const STEPS = [
   {
     icon: ScanSearch,
     title: "Notice",
-    body: "Link WhatsApp, drop in a screenshot or chat export, or jot a note. iCare picks out the moments friends share: interviews, exams, doctor visits, trips, rough weeks, big news.",
+    body: "Link WhatsApp, drop in a screenshot or chat export, or jot a note. iKare picks out the moments friends share: interviews, exams, doctor visits, trips, rough weeks, big news.",
   },
   {
     icon: MessageCircleHeart,
@@ -18,12 +18,12 @@ const STEPS = [
   {
     icon: Globe2,
     title: "Time it for them",
-    body: "Everyone has a time zone, guessed from their phone number. If it’s 3 AM where they are, iCare waits until their morning instead of buzzing them awake.",
+    body: "Everyone has a time zone, guessed from their phone number. If it’s 3 AM where they are, iKare waits until their morning instead of buzzing them awake.",
   },
   {
     icon: Sprout,
     title: "Keep in touch",
-    body: "If you haven’t talked to someone in a while, iCare nudges you with a ready-to-send hello, so friendships don’t fade quietly.",
+    body: "If you haven’t talked to someone in a while, iKare nudges you with a ready-to-send hello, so friendships don’t fade quietly.",
   },
 ];
 
@@ -31,13 +31,13 @@ export default function AboutPage() {
   return (
     <div className="space-y-10">
       <section>
-        <p className="text-sm font-semibold uppercase tracking-wider text-coral">About iCare</p>
+        <p className="text-sm font-semibold uppercase tracking-wider text-coral">About iKare</p>
         <h1 className="font-display mt-1 text-4xl font-bold leading-tight tracking-tight">
           Never miss the moments that matter to the people you love.
         </h1>
         <p className="mt-4 text-lg text-muted">
           We don&apos;t lose people all at once. We lose them by missing small moments. A friend says her interview
-          is Monday, you care in the moment, then Monday comes and you forget to ask. iCare remembers the follow-up
+          is Monday, you care in the moment, then Monday comes and you forget to ask. iKare remembers the follow-up
           so you can be there.
         </p>
       </section>
@@ -58,7 +58,7 @@ export default function AboutPage() {
         <HeartHandshake className="h-8 w-8 text-coral" />
         <h2 className="font-display mt-3 text-2xl font-bold">A bridge, not a replacement</h2>
         <p className="mt-2 opacity-85">
-          iCare never talks to your friends on its own. Every message is yours: you read it, change it, and approve
+          iKare never talks to your friends on its own. Every message is yours: you read it, change it, and approve
           it. The AI only helps you remember and find the words.
         </p>
       </section>

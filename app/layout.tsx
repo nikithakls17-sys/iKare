@@ -9,10 +9,10 @@ const display = Fraunces({ variable: "--font-display", subsets: ["latin"], weigh
 const body = Nunito({ variable: "--font-body", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "iCare — show up for the people you love",
+  title: "iKare — show up for the people you love",
   description: "Never miss the moments that matter to the people you love.",
-  applicationName: "iCare",
-  appleWebApp: { capable: true, title: "iCare", statusBarStyle: "default" },
+  applicationName: "iKare",
+  appleWebApp: { capable: true, title: "iKare", statusBarStyle: "default" },
   icons: {
     icon: [{ url: "/icons/favicon-32.png", sizes: "32x32" }, { url: "/icons/icon-any-192.png", sizes: "192x192" }],
     apple: "/icons/apple-touch-icon.png",
