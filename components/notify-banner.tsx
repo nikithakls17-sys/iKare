@@ -21,12 +21,12 @@ export function NotifyBanner() {
   }, []);
   if (!show) return null;
   return (
-    <div className="rise mb-5 flex items-center gap-3 rounded-2xl border border-coral/30 bg-peach px-4 py-3">
-      <BellRing className="h-5 w-5 shrink-0 text-coral" />
+    <div className="rise geo-box mb-6 flex items-center gap-4 border border-accent/30 bg-tint px-4 py-4">
+      <BellRing className="h-5 w-5 shrink-0 text-accent" />
       <p className="flex-1 text-sm">
         <b>Never miss a check-in.</b> Get a nudge when it&apos;s time to show up for someone.
       </p>
-      <Link href="/settings" className="shrink-0 rounded-full bg-coral px-3 py-1.5 text-sm font-bold text-white hover:bg-coral-dark">
+      <Link href="/settings" className="shrink-0 bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-accent-deep">
         Turn on
       </Link>
       <button

@@ -74,12 +74,12 @@ export type ExtractedMoment = {
 };
 
 export const CATEGORY_META: Record<Category, { label: string; emoji: string; tint: string }> = {
-  interview: { label: "Interview", emoji: "💼", tint: "bg-sky-100 text-sky-800" },
-  exam: { label: "Exam", emoji: "📚", tint: "bg-violet-100 text-violet-800" },
-  health: { label: "Health", emoji: "🩺", tint: "bg-rose-100 text-rose-800" },
-  travel: { label: "Travel", emoji: "✈️", tint: "bg-teal-100 text-teal-800" },
-  celebration: { label: "Celebration", emoji: "🎉", tint: "bg-amber-100 text-amber-800" },
-  tough_time: { label: "Tough time", emoji: "🫂", tint: "bg-orange-100 text-orange-800" },
-  other: { label: "Moment", emoji: "✨", tint: "bg-stone-100 text-stone-700" },
-  reply: { label: "Reply owed", emoji: "💬", tint: "bg-fuchsia-100 text-fuchsia-800" },
+  interview: { label: "Interview", emoji: "💼", tint: "bg-moss text-ink" },
+  exam: { label: "Exam", emoji: "📚", tint: "bg-moss text-ink" },
+  health: { label: "Health", emoji: "🩺", tint: "bg-ochre-tint text-warn" },
+  travel: { label: "Travel", emoji: "✈️", tint: "bg-moss text-ink" },
+  celebration: { label: "Celebration", emoji: "🎉", tint: "bg-ochre-tint text-warn" },
+  tough_time: { label: "Tough time", emoji: "🫂", tint: "bg-ochre-tint text-warn" },
+  other: { label: "Moment", emoji: "✨", tint: "bg-tint text-ink" },
+  reply: { label: "Reply owed", emoji: "💬", tint: "bg-ochre-tint text-warn" },
 };

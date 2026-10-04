@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Nunito } from "next/font/google";
+import { Montserrat, Playfair_Display } from "next/font/google";
+import { BloomBackdrop } from "@/components/geo";
 import { Header } from "@/components/header";
 import { Notifier } from "@/components/notifier";
 import { TodayProvider } from "@/components/today-provider";
 import "./globals.css";
 
-const display = Fraunces({ variable: "--font-display", subsets: ["latin"], weight: ["600", "700"] });
-const body = Nunito({ variable: "--font-body", subsets: ["latin"] });
+const display = Playfair_Display({ variable: "--font-display", subsets: ["latin"], weight: ["500", "600", "700"], style: ["normal", "italic"] });
+const body = Montserrat({ variable: "--font-body", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "iKare — show up for the people you love",
@@ -21,8 +22,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fff8f0" },
-    { media: "(prefers-color-scheme: dark)", color: "#15110d" },
+    { media: "(prefers-color-scheme: light)", color: "#f3f1e7" },
+    { media: "(prefers-color-scheme: dark)", color: "#171812" },
   ],
 };
 
@@ -36,10 +37,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-full font-sans">
+        <BloomBackdrop />
         <TodayProvider>
           <Header />
           <Notifier />
-          <main className="mx-auto w-full max-w-2xl px-4 pb-24 pt-6 lg:pb-10">{children}</main>
+          <main className="mx-auto w-full max-w-2xl px-4 pb-24 pt-8 lg:pb-16">{children}</main>
         </TodayProvider>
       </body>
     </html>

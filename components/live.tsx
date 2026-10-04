@@ -45,9 +45,9 @@ export function useNow(intervalMs = 30_000) {
 }
 
 const WINDOW_STYLE = {
-  good: { cls: "bg-emerald-50 text-emerald-800", Icon: Sun, label: "good time to text" },
-  late: { cls: "bg-amber-50 text-amber-800", Icon: Sunrise, label: "" },
-  sleeping: { cls: "bg-indigo-50 text-indigo-800", Icon: Moon, label: "probably asleep" },
+  good: { cls: "bg-moss text-ink", Icon: Sun, label: "good time to text" },
+  late: { cls: "bg-ochre-tint text-warn", Icon: Sunrise, label: "" },
+  sleeping: { cls: "bg-tint text-muted", Icon: Moon, label: "probably asleep" },
 } as const;
 
 export function LocalTime({ tz, compact = false }: { tz: string | null; compact?: boolean }) {
@@ -56,7 +56,7 @@ export function LocalTime({ tz, compact = false }: { tz: string | null; compact?
   const w = WINDOW_STYLE[textWindow(tz, now)];
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${w.cls}`}
+      className={`inline-flex flex-wrap items-center gap-x-1 px-2 py-1 text-xs font-semibold ${w.cls}`}
       title={`${cityName(tz)} · ${offsetLabel(tz, now)}`}
     >
       <w.Icon className="h-3 w-3" />

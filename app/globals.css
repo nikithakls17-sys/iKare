@@ -1,47 +1,68 @@
 @import "tailwindcss";
 
+/* Palette: #534332 bark · #394032 forest · #454F2D olive · #797F3E moss · #9F7E4A ochre.
+   Rough ratio: 60% paper, 25% forest/olive, 10% moss/bark, 5% ochre.
+   Neutrals are tinted with olive so they never look flat. */
 :root {
-  --cream: #fff8f0;
-  --paper: #ffffff;
-  --ink: #2b2118;
-  --muted: #7a6a5c;
-  --line: #f0e3d4;
-  --coral: #e8664a;
-  --coral-dark: #cf4f34;
-  --peach: #fde7da;
-  --sage: #e6f0e4;
-  --strong: #2b2118;
+  --cream: #f3f1e7;
+  --paper: #fbfaf4;
+  --ink: #23271c;
+  --muted: #5e6150;
+  --line: #d3d1bf;
+  --accent: #454f2d;
+  --accent-deep: #394032;
+  --on-accent: #fbfaf4;
+  --tint: #e7e7d6;
+  --moss: #e0e3c8;
+  --ochre: #9f7e4a;
+  --ochre-tint: #efe6d1;
+  --warn: #6b4f24;
+  --bark: #534332;
+  --strong: #394032;
+  --bloom: 0.08;
   color-scheme: light;
 }
 
 /* Dark theme: follows the system unless the user picked light, or forced via the toggle. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --cream: #15110d;
-    --paper: #211a14;
-    --ink: #f5ebe1;
-    --muted: #b4a392;
-    --line: #382c23;
-    --coral: #f07a5e;
-    --coral-dark: #e8664a;
-    --peach: #3a281e;
-    --sage: #1d2b20;
-    --strong: #3b2f26;
+    --cream: #171812;
+    --paper: #1f2119;
+    --ink: #eae8da;
+    --muted: #a4a48f;
+    --line: #373a2b;
+    --accent: #a4aa62;
+    --accent-deep: #8d934f;
+    --on-accent: #171812;
+    --tint: #2a2d21;
+    --moss: #2a301f;
+    --ochre: #bf9c63;
+    --ochre-tint: #33291b;
+    --warn: #e0c08a;
+    --bark: #8a7458;
+    --strong: #394032;
+    --bloom: 0.12;
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --cream: #15110d;
-  --paper: #211a14;
-  --ink: #f5ebe1;
-  --muted: #b4a392;
-  --line: #382c23;
-  --coral: #f07a5e;
-  --coral-dark: #e8664a;
-  --peach: #3a281e;
-  --sage: #1d2b20;
-  --strong: #3b2f26;
+  --cream: #171812;
+  --paper: #1f2119;
+  --ink: #eae8da;
+  --muted: #a4a48f;
+  --line: #373a2b;
+  --accent: #a4aa62;
+  --accent-deep: #8d934f;
+  --on-accent: #171812;
+  --tint: #2a2d21;
+  --moss: #2a301f;
+  --ochre: #bf9c63;
+  --ochre-tint: #33291b;
+  --warn: #e0c08a;
+  --bark: #8a7458;
+  --strong: #394032;
+  --bloom: 0.12;
   color-scheme: dark;
 }
 
@@ -51,11 +72,22 @@
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-line: var(--line);
-  --color-coral: var(--coral);
-  --color-coral-dark: var(--coral-dark);
-  --color-peach: var(--peach);
-  --color-sage: var(--sage);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-on-accent: var(--on-accent);
+  --color-tint: var(--tint);
+  --color-moss: var(--moss);
+  --color-ochre: var(--ochre);
+  --color-ochre-tint: var(--ochre-tint);
+  --color-warn: var(--warn);
+  --color-bark: var(--bark);
   --color-strong: var(--strong);
+  /* The five brand tones, fixed in both themes (used on dark bands and motifs). */
+  --color-brand-bark: #534332;
+  --color-brand-forest: #394032;
+  --color-brand-olive: #454f2d;
+  --color-brand-moss: #797f3e;
+  --color-brand-ochre: #9f7e4a;
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
 }
@@ -63,6 +95,109 @@
 body {
   background: var(--cream);
   color: var(--ink);
+}
+
+/* Inverse surface: flips the tokens for a subtree (Today cards are the inverse of People cards). */
+.inverse {
+  --cream: #20251a;
+  --paper: #2b3123;
+  --ink: #f1efe3;
+  --muted: #c4c4ae;
+  --line: #48523b;
+  --accent: #b3b972;
+  --accent-deep: #9ca25d;
+  --on-accent: #1b1f15;
+  --tint: #3a4230;
+  --moss: #3c4428;
+  --ochre: #c9a66b;
+  --ochre-tint: #3d3220;
+  --warn: #e6c993;
+  --bark: #a08a6b;
+  --strong: #4a5536;
+  color: var(--ink);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .inverse {
+    --cream: #f3f1e7;
+    --paper: #fbfaf4;
+    --ink: #23271c;
+    --muted: #5e6150;
+    --line: #d3d1bf;
+    --accent: #454f2d;
+    --accent-deep: #394032;
+    --on-accent: #fbfaf4;
+    --tint: #e7e7d6;
+    --moss: #e0e3c8;
+    --ochre: #9f7e4a;
+    --ochre-tint: #efe6d1;
+    --warn: #6b4f24;
+    --bark: #534332;
+    --strong: #394032;
+  }
+}
+:root[data-theme="dark"] .inverse {
+  --cream: #f3f1e7;
+  --paper: #fbfaf4;
+  --ink: #23271c;
+  --muted: #5e6150;
+  --line: #d3d1bf;
+  --accent: #454f2d;
+  --accent-deep: #394032;
+  --on-accent: #fbfaf4;
+  --tint: #e7e7d6;
+  --moss: #e0e3c8;
+  --ochre: #9f7e4a;
+  --ochre-tint: #efe6d1;
+  --warn: #6b4f24;
+  --bark: #534332;
+  --strong: #394032;
+}
+
+@layer base {
+  /* Touch targets: every control is at least 48×48px. */
+  button,
+  select,
+  input:not([type="checkbox"], [type="radio"], [type="range"]) {
+    min-height: 3rem;
+  }
+  button {
+    min-width: 3rem;
+  }
+}
+
+/* Small caps label: Montserrat, spaced out, like the "OUR TEAM IS LOVING" line. */
+@utility eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* Boxes get geometric edges: a quarter circle on the top-left, a square on the bottom-right. */
+@utility geo-box {
+  position: relative;
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+  }
+  &::before {
+    top: -1px;
+    left: -1px;
+    width: 16px;
+    height: 16px;
+    border-bottom-right-radius: 100%;
+    background: var(--ochre);
+  }
+  &::after {
+    right: -1px;
+    bottom: -1px;
+    width: 8px;
+    height: 8px;
+    background: var(--bark);
+  }
 }
 
 @keyframes rise {
@@ -78,4 +213,10 @@ body {
 
 .rise {
   animation: rise 0.35s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
 }

@@ -29,8 +29,8 @@ export function FavoritesToggle({ on, onToggle, count }: { on: boolean; onToggle
     <button
       onClick={onToggle}
       aria-pressed={on}
-      className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-bold transition ${
-        on ? "border-amber-400 bg-amber-100 text-amber-900" : "border-line bg-paper text-muted hover:text-ink"
+      className={`flex shrink-0 items-center gap-2 whitespace-nowrap border px-4 py-2 text-sm font-bold transition ${
+        on ? "border-ochre bg-ochre-tint text-warn" : "border-line bg-paper text-muted hover:text-ink"
       }`}
     >
       <Star className="h-4 w-4" fill={on ? "currentColor" : "none"} />
@@ -45,8 +45,8 @@ export function StarButton({ on, onClick, name }: { on: boolean; onClick: () => 
       onClick={onClick}
       aria-pressed={on}
       aria-label={on ? `Remove ${name} from favorites` : `Add ${name} to favorites`}
-      className={`grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:bg-peach ${
-        on ? "text-amber-500" : "text-muted"
+      className={`grid h-12 w-12 shrink-0 place-items-center rounded-full transition hover:bg-tint ${
+        on ? "text-ochre" : "text-muted"
       }`}
     >
       <Star className="h-5 w-5" fill={on ? "currentColor" : "none"} />
