@@ -65,6 +65,19 @@ export async function POST(request: Request) {
     await finishMoment(now.toISOString());
     return Response.json({ status: "sent" });
   } catch (e) {
-    return Response.json({ status: "failed", error: e instanceof Error ? e.message : "Send failed" }, { status: 500 });
+    const error = e instanceof Error ? e.message : "Send failed";
+    // Keep a record so a failed send can be diagnosed later.
+    await db.insert("outbox", [
+      {
+        person_id: person.id,
+        moment_id: momentId ?? null,
+        text,
+        status: "failed",
+        send_at: now.toISOString(),
+        sent_at: null,
+        error,
+      },
+    ]);
+    return Response.json({ status: "failed", error }, { status: 500 });
   }
 }

@@ -345,11 +345,64 @@ export async function canReach(person: Person) {
   return whatsappReady() && Boolean(person.whatsapp_id || person.phone);
 }
 
+function withTimeout<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`${what} timed out`)), ms)),
+  ]);
+}
+
+/** Restart the client from the saved session (no QR needed). */
+async function reconnect(reason: string) {
+  note(`WhatsApp stopped responding (${reason}). Reconnecting…`);
+  const old = state.client;
+  state.client = null;
+  state.status = "off";
+  if (old) await withTimeout(old.destroy(), 10_000, "Closing WhatsApp").catch(() => {});
+  await startWhatsApp();
+}
+
+let lastHealthy = 0;
+
+/**
+ * The background browser can go stale (e.g. after the laptop sleeps) while status still says
+ * "ready". Ask WhatsApp Web for its real state; if it doesn't answer, reconnect.
+ */
+async function ensureAlive() {
+  if (!whatsappReady()) throw new Error("WhatsApp isn't connected. Open Connect to link it.");
+  let waState: string | null = null;
+  try {
+    waState = await withTimeout(state.client!.getState(), 8_000, "WhatsApp check");
+  } catch (e) {
+    waState = e instanceof Error ? e.message : String(e);
+  }
+  if (waState === "CONNECTED") {
+    lastHealthy = Date.now();
+    return;
+  }
+  await reconnect(waState ?? "no state");
+  throw new Error("WhatsApp had gone to sleep, so iKare is reconnecting it. Try again in about a minute.");
+}
+
 export async function sendNow(person: Person, text: string) {
-  if (!whatsappReady()) throw new Error("WhatsApp isn't connected");
-  const chatId = await chatIdFor(person);
-  if (!chatId) throw new Error(`${person.name} isn't reachable on WhatsApp`);
-  await state.client!.sendMessage(chatId, text);
+  try {
+    await ensureAlive();
+    const chatId = await chatIdFor(person);
+    if (!chatId) throw new Error(`${person.name} isn't reachable on WhatsApp`);
+    try {
+      await withTimeout(state.client!.sendMessage(chatId, text), 30_000, "Sending");
+    } catch (e) {
+      // Private "@lid" ids occasionally fail; retry through the phone number.
+      const digits = person.phone?.replace(/\D/g, "");
+      if (!chatId.endsWith("@lid") || !digits) throw e;
+      const byPhone = await state.client!.getNumberId(digits);
+      if (!byPhone) throw e;
+      await withTimeout(state.client!.sendMessage(byPhone._serialized, text), 30_000, "Sending");
+    }
+  } catch (e) {
+    note(`Couldn't send to ${person.name}: ${e instanceof Error ? e.message.slice(0, 120) : e}`);
+    throw e;
+  }
   await db.update("people", person.id, { last_contact_at: new Date().toISOString() });
   await resolveReplies([person.id]);
   note(`Sent to ${person.name}`);
@@ -368,6 +421,14 @@ async function resolveReplies(personIds: string[]) {
 async function runScheduler() {
   if (!whatsappReady()) return;
   const now = Date.now();
+  // Watchdog: catch a stale session before the user tries to send.
+  if (now - lastHealthy > 2 * 60_000) {
+    try {
+      await ensureAlive();
+    } catch {
+      return;
+    }
+  }
   const due = (await db.list("outbox")).filter(
     (o) => o.status === "scheduled" && new Date(o.send_at).getTime() <= now,
   );
