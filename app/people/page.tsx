@@ -1,5 +1,7 @@
 "use client";
 
+import { AnimatedBackground } from "@/components/core/animated-background";
+import { PageBanner } from "@/components/geo";
 import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -49,32 +51,27 @@ export default function PeoplePage() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-4xl font-bold tracking-tight">People</h1>
-          <p className="mt-1 text-muted">
-            {totalShowUps > 0
-              ? `You've shown up ${totalShowUps} time${totalShowUps === 1 ? "" : "s"}. Keep it going.`
-              : "The people you want to be there for."}
-          </p>
-        </div>
+      <PageBanner eyebrow="Your circle" title="People" align="right">
+        {totalShowUps > 0
+          ? `You've shown up ${totalShowUps} time${totalShowUps === 1 ? "" : "s"}. Keep it going.`
+          : "The people you want to be there for."}
+      </PageBanner>
+
+      <div className="flex items-center justify-between gap-4">
+        <FavoritesToggle on={favOnly} onToggle={toggleFav} count={favCount} />
         {editing !== "new" && (
           <button
             onClick={() => setEditing("new")}
-            className="flex shrink-0 items-center gap-1.5 rounded-full bg-coral px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-coral-dark"
+            className="flex shrink-0 items-center gap-2 bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-accent-deep"
           >
             <Plus className="h-4 w-4" /> Add person
           </button>
         )}
       </div>
 
-      <div className="mt-4">
-        <FavoritesToggle on={favOnly} onToggle={toggleFav} count={favCount} />
-      </div>
-
       <WorldClock people={people} />
 
-      <div className="mt-6 space-y-3">
+      <div className="mt-6 space-y-4">
         {editing === "new" && (
           <PersonForm
             initial={EMPTY}
@@ -87,18 +84,25 @@ export default function PeoplePage() {
           />
         )}
 
-        {loading && [0, 1, 2].map((i) => <div key={i} className="h-20 animate-pulse rounded-3xl bg-paper" />)}
+        {loading && [0, 1, 2].map((i) => <div key={i} className="h-20 animate-pulse bg-paper" />)}
 
         {!loading && people.length === 0 && editing !== "new" && (
-          <p className="rounded-3xl border border-dashed border-line bg-paper p-8 text-center text-muted">
+          <p className="border border-dashed border-line bg-paper p-8 text-center text-muted">
             No one here yet. People are added automatically from WhatsApp or when you save moments.
           </p>
         )}
 
-        {people.map((p) =>
-          editing === p.id ? (
+        {people.length > 0 && (
+          <div className="-mx-1 space-y-2">
+            <AnimatedBackground
+              className="bg-brand-ochre/70"
+              transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              enableHover
+            >
+              {people.map((p) => (
+                <div key={p.id} data-id={p.id} className="block p-1">
+                  {editing === p.id ? (
             <PersonForm
-              key={p.id}
               initial={{
                 name: p.name,
                 phone: p.phone ?? "",
@@ -119,15 +123,18 @@ export default function PeoplePage() {
                 refresh();
               }}
             />
-          ) : (
-            <PersonRow
-              key={p.id}
-              person={p}
-              {...stats(p.id)}
-              onEdit={() => setEditing(p.id)}
-              onStar={() => updatePerson(p.id, { favorite: !p.favorite }).then(refresh)}
-            />
-          ),
+                  ) : (
+                    <PersonRow
+                      person={p}
+                      {...stats(p.id)}
+                      onEdit={() => setEditing(p.id)}
+                      onStar={() => updatePerson(p.id, { favorite: !p.favorite }).then(refresh)}
+                    />
+                  )}
+                </div>
+              ))}
+            </AnimatedBackground>
+          </div>
         )}
       </div>
     </div>
@@ -142,17 +149,17 @@ function WorldClock({ people }: { people: Person[] }) {
     return [...byZone.entries()];
   }, [people]);
   if (zones.length < 2) return null;
-  const dot = { good: "bg-emerald-400", late: "bg-amber-400", sleeping: "bg-indigo-400" };
+  const dot = { good: "bg-accent", late: "bg-ochre", sleeping: "bg-muted" };
   return (
     <div className="mt-6 -mx-4 overflow-x-auto px-4 pb-1">
       <div className="flex gap-2">
         {zones.map(([tz, ps]) => (
-          <div key={tz} className="min-w-[8.5rem] shrink-0 rounded-2xl bg-strong px-4 py-3 text-white">
-            <div className="flex items-center gap-1.5 text-xs opacity-70">
+          <div key={tz} className="min-w-[8.5rem] shrink-0 bg-strong px-4 py-4 text-white">
+            <div className="flex items-center gap-2 text-xs opacity-70">
               <span className={`h-2 w-2 rounded-full ${dot[textWindow(tz, now)]}`} />
               {cityName(tz)}
             </div>
-            <div className="font-display text-2xl font-bold">{localTimeLabel(tz, now)}</div>
+            <div className="font-display text-2xl font-semibold">{localTimeLabel(tz, now)}</div>
             <div className="truncate text-xs opacity-80">
               {ps.map((p) => p.emoji).join(" ")} {ps.map((p) => p.name).join(", ")}
             </div>
@@ -177,13 +184,18 @@ function PersonRow({
   onStar: () => void;
 }) {
   return (
-    <div className="rise flex items-center gap-3 rounded-3xl border border-line bg-paper p-4 transition hover:border-coral/50">
-      <Link href={`/people/${person.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-peach text-2xl">{person.emoji}</div>
+    <div className="rise geo-box flex w-full items-center gap-4 overflow-hidden border border-line bg-paper p-4">
+      {/* Half-circle, flat side on the right edge, curving in behind the count and actions. */}
+      <span
+        className="pointer-events-none absolute right-0 top-1/2 h-64 w-64 -translate-y-1/2 translate-x-1/2 rounded-full bg-brand-ochre/15 sm:h-88 sm:w-88"
+        aria-hidden="true"
+      />
+      <Link href={`/people/${person.id}`} className="relative flex min-w-0 flex-1 items-center gap-4">
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-tint text-xl ring-1 ring-line sm:h-12 sm:w-12 sm:text-2xl">{person.emoji}</div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-lg font-bold">
           {person.name}
-          {person.whatsapp_id && <span className="ml-1.5 text-xs font-semibold text-emerald-600">● WhatsApp</span>}
+          {person.whatsapp_id && <span className="ml-2 text-xs font-semibold text-accent">● WhatsApp</span>}
         </p>
         <p className="text-sm text-muted">
           {person.relationship ?? "Contact"}
@@ -191,23 +203,23 @@ function PersonRow({
           {pending > 0 && ` · ${pending} coming up`}
         </p>
         {person.timezone && (
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          <div className="mt-1 flex flex-wrap items-center gap-2">
             <LocalTime tz={person.timezone} compact />
             <span className="hidden text-xs text-muted sm:inline">{offsetLabel(person.timezone)}</span>
           </div>
         )}
       </div>
       <div className="shrink-0 text-right">
-        <p className="font-display text-2xl font-bold leading-none text-coral">{showedUp}</p>
-        <p className="mt-1 text-xs font-semibold text-muted">showed up</p>
+        <p className="font-display text-2xl font-semibold leading-none text-accent">{showedUp}</p>
+        <p className="eyebrow mt-1 hidden text-[10px] text-muted sm:block">showed up</p>
       </div>
       </Link>
-      <div className="flex shrink-0 flex-col">
+      <div className="relative flex shrink-0 flex-col">
         <StarButton on={person.favorite} onClick={onStar} name={person.name} />
         <button
           onClick={onEdit}
           aria-label={`Edit ${person.name}`}
-          className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-peach hover:text-ink"
+          className="grid h-12 w-12 place-items-center rounded-full text-muted hover:bg-tint hover:text-ink"
         >
           <Pencil className="h-4 w-4" />
         </button>
@@ -231,11 +243,11 @@ function PersonForm({
   const [busy, setBusy] = useState(false);
   const zones = useMemo(() => allTimezones(), []);
   const guessed = guessTimezone(f.phone);
-  const input = "w-full rounded-xl border border-line bg-cream px-3 py-2 outline-none focus:border-coral";
+  const input = "w-full border border-line bg-cream px-4 py-2 outline-none focus:border-accent";
 
   return (
     <form
-      className="rise rounded-3xl border-2 border-coral/40 bg-paper p-5"
+      className="rise geo-box w-full border-2 border-accent/40 bg-paper p-6"
       onSubmit={async (e) => {
         e.preventDefault();
         if (!f.name.trim()) return;
@@ -247,21 +259,21 @@ function PersonForm({
         }
       }}
     >
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-2">
         {EMOJIS.map((e) => (
           <button
             type="button"
             key={e}
             onClick={() => setF({ ...f, emoji: e })}
-            className={`grid h-10 w-10 place-items-center rounded-xl text-xl transition ${
-              f.emoji === e ? "bg-peach ring-2 ring-coral" : "hover:bg-cream"
+            className={`grid h-12 w-12 place-items-center text-xl transition ${
+              f.emoji === e ? "bg-tint ring-2 ring-accent" : "hover:bg-cream"
             }`}
           >
             {e}
           </button>
         ))}
       </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <input
           autoFocus
           required
@@ -300,7 +312,7 @@ function PersonForm({
             min={1}
             value={f.contact_every_days}
             onChange={(e) => setF({ ...f, contact_every_days: Number(e.target.value) })}
-            className="w-20 rounded-xl border border-line bg-cream px-3 py-1.5 text-ink outline-none focus:border-coral"
+            className="w-20 border border-line bg-cream px-4 py-2 text-ink outline-none focus:border-accent"
           />
           days
         </label>
@@ -308,18 +320,18 @@ function PersonForm({
       <div className="mt-4 flex items-center gap-2">
         <button
           disabled={busy}
-          className="rounded-full bg-coral px-5 py-2.5 font-bold text-white hover:bg-coral-dark disabled:opacity-50"
+          className="bg-accent px-6 py-2 font-bold text-on-accent hover:bg-accent-deep disabled:opacity-50"
         >
           Save
         </button>
-        <button type="button" onClick={onCancel} className="rounded-full px-5 py-2.5 font-bold hover:bg-peach">
+        <button type="button" onClick={onCancel} className="px-6 py-2 font-bold hover:bg-tint">
           Cancel
         </button>
         {onDelete && (
           <button
             type="button"
             onClick={onDelete}
-            className="ml-auto flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-50"
+            className="ml-auto flex items-center gap-2 px-4 py-2 text-sm font-semibold text-warn hover:bg-ochre-tint"
           >
             <Trash2 className="h-4 w-4" /> Remove
           </button>
