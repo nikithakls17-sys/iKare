@@ -1,4 +1,5 @@
 import { aiConfigured, extractMoments } from "@/lib/ai";
+import { localDateStr, viewerTimezone } from "@/lib/tz";
 
 export const maxDuration = 60;
 
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
       image: body.image,
       mediaType: body.mediaType,
       text: typeof body.text === "string" ? body.text.slice(-30000) : undefined,
-      today: body.today,
+      today: /^\d{4}-\d{2}-\d{2}$/.test(body.today ?? "") ? body.today : localDateStr(viewerTimezone()),
       knownPeople: Array.isArray(body.knownPeople) ? body.knownPeople : [],
       peopleContext: Array.isArray(body.peopleContext) ? body.peopleContext : [],
     });
